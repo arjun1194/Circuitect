@@ -46,8 +46,8 @@ body {
     background-image:
         radial-gradient(#2a2e3f 1px, transparent 1px),
         radial-gradient(#2a2e3f 1px, transparent 1px);
-    background-size: 10px 10px;
-    background-position: 0 0, 5px 5px;
+    background-size: 25px 25px;
+    background-position: 0 0, 12.5px 12.5px;
     position: relative;
     cursor: default;
     overflow: hidden;

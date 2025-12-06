@@ -3,7 +3,7 @@
  * Constants and configuration values
  */
 
-export const GRID_SIZE = 10;
+export const GRID_SIZE = 25;
 export const UPDATE_ITERATIONS = 20;
 export const PARTICLE_SPEED_FACTOR = 0.5;
 export const DEFAULT_BATTERY_VOLTAGE = 9;
