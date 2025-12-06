@@ -5,11 +5,20 @@
  * Note: 'check' functions now accept (components) as argument instead of importing global state.
  */
 
+import { Component } from '../engine/Physics';
 import { TYPES } from './gameConfig';
 
-export const LEVELS = [
+export interface Level {
+    title: string;
+    desc: string;
+    theory: string;
+    hints: string[];
+    check: (components: Component[]) => boolean;
+}
+
+export const LEVELS: Level[] = [
     {
-        title: "1. The Closed Loop",
+        title: "Level 1: The Closed Loop",
         desc: "Build your first circuit! Connect a Battery to an LED using Wires to create a complete loop. The current must flow from the battery's positive terminal (+) through the LED and back to the negative terminal (-).",
         theory: "Electricity requires a closed loop (circuit) to flow. Electrons move from high potential (+ terminal) to low potential (- terminal). This continuous flow is called electric current. The LED converts electrical energy into light when current passes through it. Without a complete loop, no current can flow - just like water needs a complete pipe system to circulate.",
         hints: [

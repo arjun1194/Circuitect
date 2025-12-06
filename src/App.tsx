@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { STORAGE_KEY, TYPES, DEFAULT_BATTERY_VOLTAGE } from './config/gameConfig';
+import { STORAGE_KEY, TYPES, DEFAULT_BATTERY_VOLTAGE, ComponentType } from './config/gameConfig';
 import { LEVELS } from './config/levels';
 import { theme } from './config/theme';
 import GameCanvas from './components/GameCanvas';
@@ -11,20 +11,23 @@ import FloatingControls from './components/UI/FloatingControls';
 
 import ValidationModal from './components/UI/ValidationModal';
 
+import { Component } from './engine/Physics';
+import { GameLoopController } from './hooks/useGameLoop';
+
 function App() {
   // Persistent State
-  const [levelIndex, setLevelIndex] = useState(() => {
+  const [levelIndex, setLevelIndex] = useState<number>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? Math.min(parseInt(saved), LEVELS.length - 1) : 0;
   });
 
   // Session State
-  const [toolMode, setToolMode] = useState('build'); // 'build' | 'measure'
-  const [selectedTool, setSelectedTool] = useState(TYPES.WIRE);
-  const [editingComponent, setEditingComponent] = useState(null);
-  const [gameController, setGameController] = useState(null);
-  const [hintsShown, setHintsShown] = useState(0);
-  const [validationResult, setValidationResult] = useState(null); // { success: boolean, message: string }
+  const [toolMode, setToolMode] = useState<string>('build'); // 'build' | 'measure'
+  const [selectedTool, setSelectedTool] = useState<ComponentType>(TYPES.WIRE);
+  const [editingComponent, setEditingComponent] = useState<Component | null>(null);
+  const [gameController, setGameController] = useState<GameLoopController | null>(null);
+  const [hintsShown, setHintsShown] = useState<number>(0);
+  const [validationResult, setValidationResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const currentLevel = LEVELS[levelIndex];
 

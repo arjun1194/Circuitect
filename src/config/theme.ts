@@ -12,7 +12,9 @@ export const theme = {
         danger: '#f7768e',
         warning: '#e0af68',
         grid: '#2a2e3f',
-        wire: '#565f89'
+        wire: '#565f89',
+        node: '#414868',
+        current: '#e0af68'
     },
     fonts: {
         main: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",

@@ -1,8 +1,13 @@
 import React from 'react';
 import clsx from 'clsx';
-import { Wrench, Zap } from 'lucide-react';
+import { MousePointer2, Ruler, Wrench, Zap } from 'lucide-react';
 
-export default function FloatingControls({ currentMode, onSetMode }) {
+interface FloatingControlsProps {
+    currentMode: string;
+    onSetMode: (mode: string) => void;
+}
+
+export default function FloatingControls({ currentMode, onSetMode }: FloatingControlsProps) {
     return (
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-[#24283b] p-1.5 rounded-full border border-[#414868] shadow-2xl flex gap-1 z-50">
             <button

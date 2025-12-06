@@ -1,7 +1,15 @@
 import React from 'react';
 import { X, CheckCircle, AlertTriangle } from 'lucide-react';
 
-export default function ValidationModal({ success, message, onNext, onRetry, isLastLevel }) {
+interface ValidationModalProps {
+    success: boolean;
+    message: string;
+    onNext: () => void;
+    onRetry: () => void;
+    isLastLevel: boolean;
+}
+
+export default function ValidationModal({ success, message, onNext, onRetry, isLastLevel }: ValidationModalProps) {
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
             <div className="bg-[#24283b] w-96 rounded-xl shadow-2xl border border-[#414868] p-6 transform scale-100 transition-all">

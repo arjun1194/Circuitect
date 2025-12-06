@@ -1,5 +1,16 @@
 import React from 'react';
 
+interface HeaderProps {
+    levelTitle: string;
+    onReset: () => void;
+    onClear: () => void;
+    onNextLevel: () => void;
+    onShowHints: () => void;
+    onResetProgress: () => void;
+    isLastLevel: boolean;
+    actionLabel?: string;
+}
+
 export default function Header({
     levelTitle,
     onReset,
@@ -9,7 +20,7 @@ export default function Header({
     onResetProgress,
     isLastLevel,
     actionLabel
-}) {
+}: HeaderProps) {
     return (
         <div className="h-16 bg-[#24283b] flex items-center justify-between px-6 border-b border-[#333] shadow-md z-10">
             <div className="flex items-center gap-4">

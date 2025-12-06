@@ -1,12 +1,36 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { Renderer } from '../engine/Renderer';
 import { physicsStep, CircuitNode, Component } from '../engine/Physics';
-import { GRID_SIZE, TYPES } from '../config/gameConfig';
-import { theme } from '../config/theme';
+import { GRID_SIZE, TYPES, ComponentType } from '../config/gameConfig';
 
-export function useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect) {
+
+interface GameState {
+    nodes: CircuitNode[];
+    components: Component[];
+    renderer: Renderer | null;
+    dragStart: { x: number; y: number } | null;
+    currentMouse: { x: number; y: number } | null;
+    isDragging: boolean;
+    hoverNode: CircuitNode | undefined | null;
+    lastTime: number;
+}
+
+export interface GameLoopController {
+    handleMouseDown: (e: React.MouseEvent<HTMLCanvasElement>) => void;
+    handleMouseMove: (e: React.MouseEvent<HTMLCanvasElement>) => void;
+    handleMouseUp: (e: React.MouseEvent<HTMLCanvasElement>) => void;
+    clear: () => void;
+    getComponents: () => Component[];
+}
+
+export function useGameLoop(
+    canvasRef: React.RefObject<HTMLCanvasElement | null>,
+    toolMode: string,
+    selectedTool: ComponentType,
+    onComponentSelect: (c: Component) => void
+): GameLoopController {
     // Game State (Refs for mutable game loop state to avoid re-renders)
-    const stateRef = useRef({
+    const stateRef = useRef<GameState>({
         nodes: [],
         components: [],
         renderer: null,
@@ -17,18 +41,18 @@ export function useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect
         lastTime: 0
     });
 
-    const [fps, setFps] = useState(0);
+
 
     // Initialize Renderer
     useEffect(() => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
-        stateRef.current.renderer = new Renderer(canvas, theme);
+        stateRef.current.renderer = new Renderer(canvas.getContext('2d')!); // Non-null assertion for 2d context
 
         // Handle Resize
         const handleResize = () => {
             const parent = canvas.parentElement;
-            if (parent) {
+            if (parent && stateRef.current.renderer) {
                 stateRef.current.renderer.setSize(parent.clientWidth, parent.clientHeight);
             }
         };
@@ -39,9 +63,9 @@ export function useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect
 
     // Game Loop
     useEffect(() => {
-        let animationFrameId;
+        let animationFrameId: number;
 
-        const loop = (time) => {
+        const loop = (_time: number) => {
             const state = stateRef.current;
             if (!state.renderer) return;
 
@@ -67,10 +91,11 @@ export function useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect
 
         animationFrameId = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(animationFrameId);
-    }, [toolMode]); // Re-bind if necessary, though refs are stable
+    }, [toolMode]); // Re-bind if necessary
 
     // Input Handling Helpers
-    const getGridPos = (e) => {
+    const getGridPos = (e: React.MouseEvent<HTMLCanvasElement>): { x: number, y: number } => {
+        if (!canvasRef.current) return { x: 0, y: 0 };
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
         return {
@@ -79,12 +104,12 @@ export function useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect
         };
     };
 
-    const getNodeAt = (x, y) => {
+    const getNodeAt = (x: number, y: number): CircuitNode | undefined => {
         const state = stateRef.current;
         return state.nodes.find(n => Math.hypot(n.x - x, n.y - y) < 10);
     };
 
-    const getOrCreateNode = (x, y) => {
+    const getOrCreateNode = (x: number, y: number): CircuitNode => {
         let node = getNodeAt(x, y);
         if (!node) {
             node = new CircuitNode(x, y);
@@ -94,7 +119,8 @@ export function useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect
     };
 
     // Event Handlers
-    const handleMouseDown = useCallback((e) => {
+    const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!canvasRef.current) return;
         const state = stateRef.current;
         const pos = getGridPos(e);
 
@@ -122,9 +148,10 @@ export function useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect
                 state.dragStart = null;
             }
         }
-    }, [toolMode, onComponentSelect, selectedTool]); // dependencies
+    }, [toolMode, onComponentSelect, selectedTool]);
 
-    const handleMouseMove = useCallback((e) => {
+    const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!canvasRef.current) return;
         const state = stateRef.current;
         const pos = getGridPos(e);
         state.currentMouse = pos;
@@ -136,7 +163,7 @@ export function useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect
         state.hoverNode = state.nodes.find(n => Math.hypot(n.x - mx, n.y - my) < 15);
     }, []);
 
-    const handleMouseUp = useCallback((e) => {
+    const handleMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
         const state = stateRef.current;
         if (toolMode === 'build' && state.isDragging && state.dragStart) {
             const end = getGridPos(e);
@@ -146,10 +173,6 @@ export function useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect
                 const n2 = getOrCreateNode(end.x, end.y);
 
                 const newComp = new Component(selectedTool, n1, n2);
-
-                // Handle 3-node components (Transistor) logic later if drag logic changes
-                // For now, drag creates 2-node components. Transistor needs special handling or UI.
-                // Assuming just 2 nodes for drag now.
 
                 state.components.push(newComp);
                 n1.connections.push(newComp);
@@ -161,7 +184,7 @@ export function useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect
     }, [toolMode, selectedTool]);
 
     // External Controls (Clear, Load Level)
-    const clearCircuit = () => {
+    const clear = () => {
         stateRef.current.nodes = [];
         stateRef.current.components = [];
     };
@@ -172,7 +195,7 @@ export function useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect
         handleMouseDown,
         handleMouseMove,
         handleMouseUp,
-        clearCircuit,
+        clear,
         getComponents
     };
 }

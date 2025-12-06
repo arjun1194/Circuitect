@@ -1,13 +1,14 @@
-/**
- * Circuit Architect - Physics Engine
- * Circuit simulation with node voltage analysis (Pure Logic)
- */
-
-import { TYPES, UPDATE_ITERATIONS, DEFAULT_BATTERY_VOLTAGE } from '../config/gameConfig';
+import { TYPES, UPDATE_ITERATIONS, DEFAULT_BATTERY_VOLTAGE, ComponentType } from '../config/gameConfig';
 import { COMPONENT_DEFS } from './ComponentDefinitions';
 
 export class CircuitNode {
-    constructor(x, y) {
+    x: number;
+    y: number;
+    voltage: number;
+    fixed: boolean;
+    connections: Component[]; // Array of Component instances
+
+    constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
         this.voltage = 0;
@@ -17,7 +18,20 @@ export class CircuitNode {
 }
 
 export class Component {
-    constructor(type, n1, n2) {
+    type: ComponentType;
+    n1: CircuitNode;
+    n2: CircuitNode;
+    n3: CircuitNode | null; // For transistor base
+    current: number;
+    param: number; // State param (e.g. switch on/off, LED state)
+    particles: number[];
+    resistance: number;
+    capacitance: number;
+    logic: string;
+    voltage: number;
+    ledColor?: string;
+
+    constructor(type: ComponentType, n1: CircuitNode, n2: CircuitNode) {
         this.type = type;
         this.n1 = n1;
         this.n2 = n2;
@@ -41,7 +55,7 @@ export class Component {
         }
     }
 
-    getResistance() {
+    getResistance(): number {
         if (this.type === TYPES.WIRE) return 0.1;
         if (this.type === TYPES.SWITCH) return this.param === 1 ? 0.1 : 999999999;
         if (this.type === TYPES.TRANSISTOR) return 1000000;
@@ -51,17 +65,15 @@ export class Component {
         return this.resistance;
     }
 
-    getSourceVoltage() {
+    getSourceVoltage(): number {
         return (this.type === TYPES.BATTERY) ? this.voltage : 0;
     }
 }
 
 /**
  * Run one step of circuit simulation
- * @param {CircuitNode[]} nodes 
- * @param {Component[]} components 
  */
-export function physicsStep(nodes, components) {
+export function physicsStep(nodes: CircuitNode[], components: Component[]) {
     nodes.forEach(n => { n.fixed = false; });
 
     for (let iter = 0; iter < UPDATE_ITERATIONS; iter++) {
@@ -134,9 +146,9 @@ export function physicsStep(nodes, components) {
                     const voltage = comp.getSourceVoltage();
                     const sourceG = 10.0;
                     if (comp.n1 === node) {
-                        numerator += (other.voltage + voltage) * sourceG;
+                        numerator += (other!.voltage + voltage) * sourceG;
                     } else {
-                        numerator += (other.voltage - voltage) * sourceG;
+                        numerator += (other!.voltage - voltage) * sourceG;
                         hasBatteryNegative = true;
                     }
                     denominator += sourceG;

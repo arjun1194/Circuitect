@@ -1,23 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Component } from '../../engine/Physics';
+import { COMPONENT_DEFS } from '../../engine/ComponentDefinitions';
 import { TYPES, DEFAULT_BATTERY_VOLTAGE } from '../../config/gameConfig';
 import { X } from 'lucide-react';
 
-export default function PropertyEditor({ component, onClose }) {
-    // Local state to handle input before blur/save, or live update?
-    // Live update is better. But modification needs to affect the actual component instance.
-    // Since component is passed by reference (from GameLoop), mutating it works directly for the physics engine.
-    // However, to trigger React re-renders if needed, we might need a forceUpdate? 
-    // Actually the Canvas renders on RequestAnimationFrame, so mutation is visible immediately on next frame.
-    // React UI might need update.
+interface PropertyEditorProps {
+    component: Component;
+    onClose: () => void;
+}
 
-    // We'll use a forceUpdate to ensure input fields reflect changes.
+export default function PropertyEditor({ component, onClose }: PropertyEditorProps) {
+    // Local state to handle live updates
     const [, forceUpdate] = useState({});
 
     // If no component selected, don't render
     if (!component) return null;
 
-    const handleChange = (field, value) => {
-        component[field] = value;
+    const handleChange = (field: keyof Component, value: any) => {
+        (component as any)[field] = value;
         forceUpdate({}); // Re-render this component
     };
 

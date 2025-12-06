@@ -1,11 +1,18 @@
 import React from 'react';
-import { TYPES } from '../../config/gameConfig';
+import { TYPES, ComponentType } from '../../config/gameConfig';
 import { COMPONENT_DEFS } from '../../engine/ComponentDefinitions';
 import clsx from 'clsx';
 
-export default function Toolbox({ selectedTool, onSelectTool, currentMode, onSetMode }) {
+interface ToolboxProps {
+    selectedTool: ComponentType;
+    onSelectTool: (t: ComponentType) => void;
+    currentMode: string;
+    onSetMode: (m: string) => void;
+}
+
+export default function Toolbox({ selectedTool, onSelectTool, currentMode, onSetMode }: ToolboxProps) {
     // Group by category
-    const categories = {
+    const categories: Record<string, string[]> = {
         'Basic': [],
         'Passive': [],
         'Active': [],

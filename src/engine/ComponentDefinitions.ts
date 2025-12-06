@@ -5,10 +5,24 @@
  * Note: Draw functions receive the canvas context and the component instance.
  */
 
+import { Component } from './Physics';
 import { TYPES, DEFAULT_BATTERY_VOLTAGE } from '../config/gameConfig';
 
+export interface ComponentDef {
+    name: string;
+    color: string;
+    r: number;
+    category: string;
+    voltage?: number; // For Battery
+    drop?: number;    // For LED
+    capacitance?: number; // For Capacitor
+    ledColors?: Record<string, { on: string; off: string; glow: string }>;
+    draw?: (ctx: CanvasRenderingContext2D, param: any, c: Component, theme: any) => void;
+    logic?: string; // For Chip
+}
+
 // Helper to draw rounded rect
-function roundRect(ctx, x, y, w, h, r) {
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
     if (w < 2 * r) r = w / 2;
     if (h < 2 * r) r = h / 2;
     ctx.beginPath();
@@ -20,13 +34,13 @@ function roundRect(ctx, x, y, w, h, r) {
     ctx.closePath();
 }
 
-export const COMPONENT_DEFS = {
+export const COMPONENT_DEFS: Record<string, ComponentDef> = {
     [TYPES.WIRE]: {
         name: 'Wire',
         color: '#565f89', // Will be overridden by theme in Renderer if dynamic
         r: 0.1,
         category: 'Basic',
-        draw: (ctx, c, theme) => { /* Handled in main draw loop */ }
+        draw: (ctx: CanvasRenderingContext2D, param: any, c: Component, theme: any) => { /* Handled in main draw loop */ }
     },
     [TYPES.BATTERY]: {
         name: 'Battery',
@@ -34,9 +48,24 @@ export const COMPONENT_DEFS = {
         r: 0.1,
         category: 'Power',
         voltage: DEFAULT_BATTERY_VOLTAGE,
-        draw: (ctx, param, c, theme) => {
+        draw: (ctx: CanvasRenderingContext2D, param: any, c: Component, theme: any) => {
             const voltage = c.voltage || DEFAULT_BATTERY_VOLTAGE;
+            // Calculate distance for leads
+            const dist = Math.hypot(c.n2.x - c.n1.x, c.n2.y - c.n1.y);
+            const halfDist = dist / 2;
+
             ctx.save();
+
+            // Draw Leads
+            ctx.strokeStyle = theme.colors.wire || '#565f89';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-halfDist, 0);
+            ctx.lineTo(-12, 0); // Connect to body left
+            ctx.moveTo(12, 0);  // Connect body right
+            ctx.lineTo(halfDist, 0);
+            ctx.stroke();
+
             // Gradient body
             const grad = ctx.createLinearGradient(-15, -10, 15, 10);
             grad.addColorStop(0, '#444');
@@ -77,12 +106,26 @@ export const COMPONENT_DEFS = {
         color: '#e0af68',
         r: 220,
         category: 'Passive',
-        draw: (ctx, param, c, theme) => {
+        draw: (ctx: CanvasRenderingContext2D, param: any, c: Component, theme: any) => {
+            const dist = Math.hypot(c.n2.x - c.n1.x, c.n2.y - c.n1.y);
+            const halfDist = dist / 2;
+
             ctx.save();
+
+            // Draw Leads
+            ctx.strokeStyle = theme.colors.wire || '#565f89';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-halfDist, 0);
+            ctx.lineTo(-20, 0); // Connect to body left
+            ctx.moveTo(20, 0);  // Connect body right
+            ctx.lineTo(halfDist, 0);
+            ctx.stroke();
+
             ctx.fillStyle = '#f2e6ce';
             roundRect(ctx, -20, -6, 40, 12, 5);
             ctx.fill();
-            const drawBand = (x, color) => {
+            const drawBand = (x: number, color: string) => {
                 ctx.fillStyle = color;
                 ctx.fillRect(x, -6, 4, 12);
             };
@@ -111,15 +154,29 @@ export const COMPONENT_DEFS = {
             yellow: { on: 'rgba(255, 220, 50, 1)', off: 'rgba(100, 85, 20, 0.5)', glow: '#ffcc00' },
             white: { on: 'rgba(255, 255, 255, 1)', off: 'rgba(100, 100, 100, 0.5)', glow: '#ffffff' }
         },
-        draw: (ctx, param, c, theme) => {
+        draw: (ctx: CanvasRenderingContext2D, param: any, c: Component, theme: any) => {
             const on = param > 0;
             const ledColor = c.ledColor || 'red';
             // Access definition from this object instance or hardcoded backup
             const def = COMPONENT_DEFS[TYPES.LED];
-            const colors = def.ledColors[ledColor] || def.ledColors.red;
+            const colors = (def.ledColors && def.ledColors[ledColor]) ? def.ledColors[ledColor] : (def.ledColors ? def.ledColors.red : { on: 'red', off: 'darkred', glow: 'red' });
             const color = on ? colors.on : colors.off;
 
+            const dist = Math.hypot(c.n2.x - c.n1.x, c.n2.y - c.n1.y);
+            const halfDist = dist / 2;
+
             ctx.save();
+
+            // Draw Leads
+            ctx.strokeStyle = theme.colors.wire || '#565f89';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-halfDist, 0);
+            ctx.lineTo(-10, 0);
+            ctx.moveTo(10, 0);
+            ctx.lineTo(halfDist, 0);
+            ctx.stroke();
+
             if (on) {
                 ctx.shadowColor = colors.glow;
                 ctx.shadowBlur = 20;
@@ -151,10 +208,24 @@ export const COMPONENT_DEFS = {
         color: '#bb9af7',
         r: 0.1,
         category: 'Control',
-        draw: (ctx, param, c, theme) => {
+        draw: (ctx: CanvasRenderingContext2D, param: any, c: Component, theme: any) => {
+            const dist = Math.hypot(c.n2.x - c.n1.x, c.n2.y - c.n1.y);
+            const halfDist = dist / 2;
+
+            ctx.save();
+
+            // Leads
+            ctx.strokeStyle = theme.colors.wire || '#565f89';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-halfDist, 0);
+            ctx.lineTo(-15, 0);
+            ctx.moveTo(15, 0);
+            ctx.lineTo(halfDist, 0);
+            ctx.stroke();
+
             ctx.fillStyle = '#333';
             ctx.fillRect(-15, -8, 30, 16);
-            ctx.save();
             ctx.fillStyle = '#eee';
             if (param) ctx.rotate(Math.PI / 8);
             else ctx.rotate(-Math.PI / 4);
@@ -171,7 +242,22 @@ export const COMPONENT_DEFS = {
         color: '#7dcfff',
         r: 1000000,
         category: 'Passive',
-        draw: (ctx, param, c, theme) => {
+        capacitance: 10,
+        draw: (ctx: CanvasRenderingContext2D, param: any, c: Component, theme: any) => {
+            const dist = Math.hypot(c.n2.x - c.n1.x, c.n2.y - c.n1.y);
+            const halfDist = dist / 2;
+
+            ctx.save();
+            // Leads
+            ctx.strokeStyle = theme.colors.wire || '#565f89';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-halfDist, 0);
+            ctx.lineTo(-2, 0);
+            ctx.moveTo(2, 0); // Capacitor gap
+            ctx.lineTo(halfDist, 0);
+            ctx.stroke();
+
             ctx.fillStyle = '#3d59a1';
             ctx.beginPath();
             ctx.arc(0, 0, 10, 0, Math.PI * 2);
@@ -187,6 +273,7 @@ export const COMPONENT_DEFS = {
             ctx.font = '9px monospace';
             ctx.textAlign = 'center';
             ctx.fillText((c.capacitance || 10) + "µF", 0, -12);
+            ctx.restore();
         }
     },
     [TYPES.TRANSISTOR]: {
@@ -194,7 +281,20 @@ export const COMPONENT_DEFS = {
         color: '#ff9e64',
         r: 1000,
         category: 'Active',
-        draw: (ctx, param, c, theme) => {
+        draw: (ctx: CanvasRenderingContext2D, param: any, c: Component, theme: any) => {
+            const dist = Math.hypot(c.n2.x - c.n1.x, c.n2.y - c.n1.y);
+            const halfDist = dist / 2;
+
+            ctx.save();
+            ctx.strokeStyle = theme.colors.wire || '#565f89';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-halfDist, 0);
+            ctx.lineTo(-12, 0);
+            ctx.moveTo(12, 0);
+            ctx.lineTo(halfDist, 0);
+            ctx.stroke();
+
             ctx.fillStyle = '#222';
             ctx.beginPath();
             ctx.arc(0, 5, 12, Math.PI, 0);
@@ -211,6 +311,7 @@ export const COMPONENT_DEFS = {
             ctx.font = '8px monospace';
             ctx.fillStyle = '#888';
             ctx.fillText('B', 5, -2);
+            ctx.restore();
         }
     },
     [TYPES.CHIP]: {
@@ -218,12 +319,27 @@ export const COMPONENT_DEFS = {
         color: '#fff',
         r: 1000,
         category: 'Abstraction',
-        draw: (ctx, param, c, theme) => {
+        logic: 'AND',
+        draw: (ctx: CanvasRenderingContext2D, param: any, c: Component, theme: any) => {
+            const dist = Math.hypot(c.n2.x - c.n1.x, c.n2.y - c.n1.y);
+            const halfDist = dist / 2;
+
+            ctx.save();
+            // Leads
+            ctx.strokeStyle = theme.colors.wire || '#565f89';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-halfDist, 0);
+            ctx.lineTo(-14, 0);
+            ctx.moveTo(14, 0);
+            ctx.lineTo(halfDist, 0);
+            ctx.stroke();
+
             ctx.fillStyle = '#1a1a1a';
             ctx.fillRect(-14, -14, 28, 28);
             ctx.fillStyle = '#333';
             ctx.beginPath();
-            ctx.arc(0, -14, 4, 0, Math.PI, false);
+            ctx.arc(0, -14, 4, 0, Math.PI, false); // Removed Boolean arg if strict
             ctx.fill();
             ctx.fillStyle = '#aaa';
             for (let i = 0; i < 3; i++) {
@@ -234,6 +350,7 @@ export const COMPONENT_DEFS = {
             ctx.font = 'bold 8px monospace';
             ctx.textAlign = 'center';
             ctx.fillText(c.logic || 'AND', 0, 4);
+            ctx.restore();
         }
     }
 };
