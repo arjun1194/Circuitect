@@ -1,128 +1,16 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Circuit Architect: Logic & Abstraction</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Circuit Architect</title>
 </head>
 
 <body>
-
-    <!-- TOP BAR -->
-    <div id="top-bar">
-        <div style="font-weight: bold; font-size: 20px; display:flex; align-items:center;">
-            <span style="font-size:24px; margin-right:10px;">⚡</span>
-            Circuit Architect
-        </div>
-        <div class="control-group">
-            <span id="level-indicator"
-                style="color: var(--accent-color); font-weight:bold; margin-right: 20px; align-self:center;">Level
-                1/10</span>
-            <button class="action-btn secondary" id="btn-reset-progress">Reset Progress</button>
-            <button class="action-btn primary" id="btn-submit">TEST CIRCUIT</button>
-            <button class="action-btn danger" id="btn-clear">Clear</button>
-        </div>
-    </div>
-
-    <!-- MAIN GAME AREA -->
-    <div id="game-area">
-        <div id="canvas-container">
-            <canvas id="sim-canvas"></canvas>
-
-            <!-- MEASURE TOOLTIP -->
-            <div id="measure-tooltip">V: 0.00V</div>
-
-            <!-- HUD -->
-            <div id="level-info" class="hud-panel">
-                <h3 style="margin-top:0; color:var(--accent-color); font-size:18px;" id="level-title">Sandbox Mode</h3>
-                <p id="level-desc" style="font-size: 14px; line-height: 1.5; color: white;">Build whatever you want.</p>
-                <div id="level-theory">THEORY: Current flows from high potential (+) to low potential (-).</div>
-                <div id="level-hint"></div>
-                <button id="hint-btn">Show Hint (0/4)</button>
-                <div id="level-status"
-                    style="margin-top:10px; font-weight:bold; color: var(--success-color); text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">
-                </div>
-            </div>
-
-            <!-- MODE SWITCHER -->
-            <div id="mode-switcher">
-                <button class="mode-btn active" id="btn-mode-build">
-                    <span>🔨</span> Place
-                </button>
-                <button class="mode-btn" id="btn-mode-measure">
-                    <span>📟</span> Measure
-                </button>
-            </div>
-        </div>
-
-        <!-- TOOLBOX -->
-        <div id="toolbox">
-            <!-- Generated via JS -->
-        </div>
-    </div>
-
-    <!-- COMPONENT PROPERTY EDITOR -->
-    <div id="prop-editor">
-        <h3 id="prop-title">Edit Component</h3>
-
-        <div id="field-battery" style="display:none;">
-            <label>Voltage (V)</label>
-            <input type="number" id="inp-voltage" value="9" min="1" max="48" step="0.5">
-            <p style="font-size:11px; color:#565f89; font-style:italic;">Adjust the battery voltage. Common values:
-                1.5V, 3V, 5V, 9V, 12V.</p>
-        </div>
-
-        <div id="field-resistor" style="display:none;">
-            <label>Resistance (Ω)</label>
-            <input type="number" id="inp-resistance" value="220" min="1" max="1000000">
-        </div>
-
-        <div id="field-capacitor" style="display:none;">
-            <label>Capacitance (µF)</label>
-            <input type="number" id="inp-capacitance" value="10" min="1" max="1000">
-            <p style="font-size:11px; color:#565f89; font-style:italic;">In DC circuits, capacitors act as Open Circuits
-                (High Resistance) once charged.</p>
-        </div>
-
-        <div id="field-chip" style="display:none;">
-            <label>Logic Type</label>
-            <select id="inp-logic">
-                <option value="AND">AND Gate (A && B)</option>
-                <option value="OR">OR Gate (A || B)</option>
-                <option value="XOR">XOR Gate (A ^ B)</option>
-                <option value="NAND">NAND Gate (! (A && B))</option>
-            </select>
-        </div>
-
-        <div id="field-led" style="display:none;">
-            <label>LED Color</label>
-            <select id="inp-led-color">
-                <option value="red">🔴 Red</option>
-                <option value="green">🟢 Green</option>
-                <option value="blue">🔵 Blue</option>
-                <option value="yellow">🟡 Yellow</option>
-                <option value="white">⚪ White</option>
-            </select>
-            <p style="font-size:11px; color:#565f89; font-style:italic;">Choose the LED color. Different colors have
-                slightly different voltage drops in real life.</p>
-        </div>
-
-        <button class="action-btn success" id="btn-save-prop" style="width:100%">Save Properties</button>
-    </div>
-
-    <!-- MODAL -->
-    <div id="modal-overlay">
-        <div class="modal-content">
-            <h1 style="color:var(--success-color); margin-top:0;">Circuit Functional!</h1>
-            <p id="modal-msg" style="color:#c0caf5; margin-bottom: 30px;">Voltage parameters within tolerance.</p>
-            <button class="action-btn success" id="btn-next-level">Proceed to Level <span
-                    id="next-level-num">2</span></button>
-        </div>
-    </div>
-
-    <script type="module" src="js/main.js"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
 </body>
 
 </html>
