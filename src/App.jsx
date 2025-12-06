@@ -7,6 +7,10 @@ import Header from './components/UI/Header';
 import Toolbox from './components/UI/Toolbox';
 import PropertyEditor from './components/UI/PropertyEditor';
 
+import FloatingControls from './components/UI/FloatingControls';
+
+import ValidationModal from './components/UI/ValidationModal';
+
 function App() {
   // Persistent State
   const [levelIndex, setLevelIndex] = useState(() => {
@@ -20,6 +24,7 @@ function App() {
   const [editingComponent, setEditingComponent] = useState(null);
   const [gameController, setGameController] = useState(null);
   const [hintsShown, setHintsShown] = useState(0);
+  const [validationResult, setValidationResult] = useState(null); // { success: boolean, message: string }
 
   const currentLevel = LEVELS[levelIndex];
 
@@ -41,25 +46,34 @@ function App() {
     }
   };
 
-  const handleLevelComplete = () => {
-    // Validation Logic
+  const handleTestCircuit = () => {
     if (!gameController) return;
 
-    // We need direct access to components for validation
-    // The controller exposes getComponents()
     const components = gameController.getComponents();
+    const success = currentLevel.check(components);
 
-    if (currentLevel.check(components)) {
-      alert("Level Completed! 🎉");
-      if (levelIndex < LEVELS.length - 1) {
-        setLevelIndex(prev => prev + 1);
-        handleClearBoard();
-        setHintsShown(0);
-      } else {
-        alert("You finished the game! Congratulations!");
-      }
+    if (success) {
+      setValidationResult({
+        success: true,
+        message: "Great job! The circuit meets all requirements."
+      });
     } else {
-      alert("Not quite right yet. Checks the hints!");
+      setValidationResult({
+        success: false,
+        message: "The circuit doesn't work as expected yet. Check your connections and values."
+      });
+    }
+  };
+
+  const handleNextLevel = () => {
+    setValidationResult(null);
+    if (levelIndex < LEVELS.length - 1) {
+      setLevelIndex(prev => prev + 1);
+      handleClearBoard();
+      setHintsShown(0);
+    } else {
+      // Game Finished logic (maybe just a toast or stay on last level)
+      alert("Configuration complete! You've beaten the game.");
     }
   };
 
@@ -67,6 +81,7 @@ function App() {
     gameController?.clear();
     setEditingComponent(null);
     setHintsShown(0);
+    setValidationResult(null);
   }, [gameController]);
 
   // Mount Controller (from GameCanvas)
@@ -85,25 +100,19 @@ function App() {
     <div className="flex flex-col h-screen text-[#c0caf5] bg-[#1a1c23] select-none font-sans overflow-hidden">
       <Header
         levelTitle={currentLevel.title}
-        onReset={handleClearBoard} // Header "Reset" usually means restart level or clear? "Clear Board"
+        onReset={handleClearBoard}
         onClear={handleClearBoard}
-        onNextLevel={handleLevelComplete} // "Next Level" / Submit button
+        onNextLevel={handleTestCircuit}
         onShowHints={() => setHintsShown(prev => Math.min(prev + 1, currentLevel.hints.length))}
         onResetProgress={handleResetProgress}
         isLastLevel={levelIndex === LEVELS.length - 1}
+        actionLabel="Test Circuit"
       />
 
       <div className="flex flex-1 overflow-hidden relative">
-        {/* TOOLBOX */}
-        <Toolbox
-          selectedTool={selectedTool}
-          onSelectTool={setSelectedTool}
-          currentMode={toolMode}
-          onSetMode={setToolMode}
-        />
 
-        {/* GAME AREA */}
-        <div className="flex-1 flex flex-col relative">
+        {/* GAME AREA - Now first in flex order, taking remaining space */}
+        <div className="flex-1 flex flex-col relative order-1">
 
           {/* HUD: Level Info */}
           <div className="absolute top-5 left-5 pointer-events-none z-10 max-w-md">
@@ -136,6 +145,9 @@ function App() {
             onMountController={onMountController}
           />
 
+          {/* Floating Controls */}
+          <FloatingControls currentMode={toolMode} onSetMode={setToolMode} />
+
           {/* PROPERTY EDITOR OVERLAY */}
           {editingComponent && (
             <PropertyEditor
@@ -143,7 +155,29 @@ function App() {
               onClose={() => setEditingComponent(null)}
             />
           )}
+
+          {/* VALIDATION MODAL */}
+          {validationResult && (
+            <ValidationModal
+              success={validationResult.success}
+              message={validationResult.message}
+              onNext={handleNextLevel}
+              onRetry={() => setValidationResult(null)}
+              isLastLevel={levelIndex === LEVELS.length - 1}
+            />
+          )}
         </div>
+
+        {/* TOOLBOX - Now second in flex order (Right Side) */}
+        <div className="order-2 border-l border-[#333] shadow-lg z-20 h-full bg-[#24283b]">
+          <Toolbox
+            selectedTool={selectedTool}
+            onSelectTool={setSelectedTool}
+            currentMode={toolMode}
+            onSetMode={setToolMode}
+          />
+        </div>
+
       </div>
     </div>
   );

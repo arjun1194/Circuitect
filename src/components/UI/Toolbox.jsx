@@ -25,31 +25,8 @@ export default function Toolbox({ selectedTool, onSelectTool, currentMode, onSet
     return (
         <div className="w-60 bg-[#24283b] flex flex-col p-4 border-l border-[#333] shadow-lg overflow-y-auto">
 
-            {/* Mode Switcher (Integrated into Toolbox for cleaner UI, or keep separate?) 
-                Legacy had it floating. Let's put it at top of toolbox for better UX. */}
-            <div className="flex mb-6 bg-[#1a1c23] p-1 rounded-lg border border-[#414868]">
-                <button
-                    onClick={() => onSetMode('build')}
-                    className={clsx(
-                        "flex-1 py-2 text-sm font-bold rounded transition-colors",
-                        currentMode === 'build' ? "bg-[#7aa2f7] text-[#1a1c23]" : "text-[#565f89] hover:bg-[#2f3549]"
-                    )}
-                >
-                    🔨 Build
-                </button>
-                <button
-                    onClick={() => onSetMode('measure')}
-                    className={clsx(
-                        "flex-1 py-2 text-sm font-bold rounded transition-colors",
-                        currentMode === 'measure' ? "bg-[#e0af68] text-[#1a1c23]" : "text-[#565f89] hover:bg-[#2f3549]"
-                    )}
-                >
-                    ⚡ Measure
-                </button>
-            </div>
-
             {/* Components List */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto mt-4">
                 {Object.entries(categories).map(([cat, types]) => {
                     if (types.length === 0) return null;
                     return (

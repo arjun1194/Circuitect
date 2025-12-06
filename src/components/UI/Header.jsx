@@ -7,7 +7,8 @@ export default function Header({
     onNextLevel,
     onShowHints,
     onResetProgress,
-    isLastLevel
+    isLastLevel,
+    actionLabel
 }) {
     return (
         <div className="h-16 bg-[#24283b] flex items-center justify-between px-6 border-b border-[#333] shadow-md z-10">
@@ -43,9 +44,9 @@ export default function Header({
                 </button>
                 <button
                     onClick={onNextLevel}
-                    className="bg-[#9ece6a] text-[#1a1c23] px-4 py-2 rounded font-bold text-sm hover:opacity-90 transition-transform active:scale-95 ml-2"
+                    className="bg-[#e0af68] text-[#1a1c23] px-4 py-2 rounded font-bold text-sm hover:opacity-90 transition-transform active:scale-95 ml-2 shadow-[0_0_10px_rgba(224,175,104,0.3)]"
                 >
-                    {isLastLevel ? 'Finish Game' : 'Next Level'}
+                    {actionLabel || (isLastLevel ? 'Finish Game' : 'Next Level')}
                 </button>
             </div>
         </div>

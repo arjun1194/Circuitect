@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { useGameLoop } from '../hooks/useGameLoop';
+import { theme } from '../config/theme';
+import { GRID_SIZE } from '../config/gameConfig';
 
 export default function GameCanvas({ toolMode, selectedTool, onComponentSelect, onMountController }) {
     const canvasRef = useRef(null);
@@ -17,7 +19,15 @@ export default function GameCanvas({ toolMode, selectedTool, onComponentSelect, 
     }, [onMountController, clearCircuit, getComponents]);
 
     return (
-        <div className="flex-1 relative bg-[#131318] overflow-hidden" id="canvas-container">
+        <div
+            className="flex-1 relative bg-[#1a1c23] overflow-hidden"
+            id="canvas-container"
+            style={{
+                backgroundImage: `radial-gradient(${theme.colors.grid} 1px, transparent 1px)`,
+                backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
+                backgroundPosition: '0 0'
+            }}
+        >
             <canvas
                 ref={canvasRef}
                 className="block w-full h-full cursor-crosshair touch-none"
