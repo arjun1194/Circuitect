@@ -3,7 +3,7 @@ import { LEVELS } from '../config/levels';
 import { TYPES } from '../config/gameConfig';
 
 // Mock Component helper
-const createComp = (type, props = {}) => ({ type, ...props });
+const createComp = (type: any, props = {}) => ({ type, ...props });
 
 describe('Level Validation Logic', () => {
     describe('Level 1: The Closed Loop', () => {
@@ -15,7 +15,7 @@ describe('Level Validation Logic', () => {
                 createComp(TYPES.WIRE),
                 createComp(TYPES.LED, { param: 1 })
             ];
-            expect(level.check(components)).toBe(true);
+            expect(level.check(components as any)).toBe(true);
         });
 
         it('should fail if LED is off', () => {
@@ -23,7 +23,7 @@ describe('Level Validation Logic', () => {
                 createComp(TYPES.BATTERY),
                 createComp(TYPES.LED, { param: 0 })
             ];
-            expect(level.check(components)).toBe(false);
+            expect(level.check(components as any)).toBe(false);
         });
     });
 
@@ -35,7 +35,7 @@ describe('Level Validation Logic', () => {
                 createComp(TYPES.SWITCH),
                 createComp(TYPES.LED, { param: 1 })
             ];
-            expect(level.check(components)).toBe(true);
+            expect(level.check(components as any)).toBe(true);
         });
 
         it('should fail if Switch is missing', () => {
@@ -45,7 +45,7 @@ describe('Level Validation Logic', () => {
             ];
             // Level 2 requires a switch component to be present? 
             // "check: (components) => components.some(...) && components.some(SWITCH)"
-            expect(level.check(components)).toBe(false);
+            expect(level.check(components as any)).toBe(false);
         });
     });
 
@@ -59,7 +59,7 @@ describe('Level Validation Logic', () => {
                 createComp(TYPES.SWITCH),
                 createComp(TYPES.LED)
             ];
-            expect(level.check(components)).toBe(true);
+            expect(level.check(components as any)).toBe(true);
         });
 
         it('should fail if only 1 switch', () => {
@@ -67,7 +67,7 @@ describe('Level Validation Logic', () => {
                 createComp(TYPES.SWITCH),
                 createComp(TYPES.LED)
             ];
-            expect(level.check(components)).toBe(false);
+            expect(level.check(components as any)).toBe(false);
         });
     });
 });

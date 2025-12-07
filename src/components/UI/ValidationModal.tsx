@@ -1,5 +1,4 @@
-import React from 'react';
-import { X, CheckCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, AlertTriangle } from 'lucide-react';
 
 interface ValidationModalProps {
     success: boolean;

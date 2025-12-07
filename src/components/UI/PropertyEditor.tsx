@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Component } from '../../engine/Physics';
-import { COMPONENT_DEFS } from '../../engine/ComponentDefinitions';
-import { TYPES, DEFAULT_BATTERY_VOLTAGE } from '../../config/gameConfig';
+import { useState } from 'react';
+import { AbstractComponent } from '../../engine/Physics';
+
+import { TYPES } from '../../config/gameConfig';
 import { X } from 'lucide-react';
 
 interface PropertyEditorProps {
-    component: Component;
+    component: AbstractComponent;
     onClose: () => void;
 }
 
@@ -16,7 +16,7 @@ export default function PropertyEditor({ component, onClose }: PropertyEditorPro
     // If no component selected, don't render
     if (!component) return null;
 
-    const handleChange = (field: keyof Component, value: any) => {
+    const handleChange = (field: string, value: any) => {
         (component as any)[field] = value;
         forceUpdate({}); // Re-render this component
     };
@@ -32,74 +32,69 @@ export default function PropertyEditor({ component, onClose }: PropertyEditorPro
 
             {/* BATTERY */}
             {component.type === TYPES.BATTERY && (
-                <div>
-                    <label className="block text-[#aaa] text-xs mb-1">Voltage (V)</label>
+                <div className="mb-4">
+                    <label className="block text-gray-400 text-xs mb-1">Voltage (V)</label>
                     <input
                         type="number"
-                        value={component.voltage || DEFAULT_BATTERY_VOLTAGE}
+                        value={(component as any).voltage || 0}
                         onChange={(e) => handleChange('voltage', parseFloat(e.target.value))}
-                        className="w-full bg-[#1a1c23] text-white p-2 rounded border border-[#444] mb-2"
-                        min="1" max="48" step="0.5"
+                        className="w-full bg-[#1a1b26] border border-[#414868] rounded px-2 py-1 text-white text-sm"
                     />
-                    <p className="text-[11px] text-[#565f89] italic">Adjust battery voltage (1V - 48V)</p>
                 </div>
             )}
 
-            {/* RESISTOR */}
-            {component.type === TYPES.RESISTOR && (
-                <div>
-                    <label className="block text-[#aaa] text-xs mb-1">Resistance (Ω)</label>
+            {/* Resistance */}
+            {(component.type === TYPES.RESISTOR) && (
+                <div className="mb-4">
+                    <label className="block text-gray-400 text-xs mb-1">Resistance (Ω)</label>
                     <input
                         type="number"
-                        value={component.resistance || 220}
-                        onChange={(e) => handleChange('resistance', parseInt(e.target.value))}
-                        className="w-full bg-[#1a1c23] text-white p-2 rounded border border-[#444]"
-                        min="1" max="1000000"
+                        value={(component as any).resistance || 0}
+                        onChange={(e) => handleChange('resistance', parseFloat(e.target.value))}
+                        className="w-full bg-[#1a1b26] border border-[#414868] rounded px-2 py-1 text-white text-sm"
                     />
                 </div>
             )}
 
-            {/* CAPACITOR */}
-            {component.type === TYPES.CAPACITOR && (
-                <div>
-                    <label className="block text-[#aaa] text-xs mb-1">Capacitance (µF)</label>
+            {/* Capacitance */}
+            {(component.type === TYPES.CAPACITOR) && (
+                <div className="mb-4">
+                    <label className="block text-gray-400 text-xs mb-1">Capacitance (µF)</label>
                     <input
                         type="number"
-                        value={component.capacitance || 10}
-                        onChange={(e) => handleChange('capacitance', parseInt(e.target.value))}
-                        className="w-full bg-[#1a1c23] text-white p-2 rounded border border-[#444] mb-2"
-                        min="1" max="1000"
+                        value={(component as any).capacitance || 0}
+                        onChange={(e) => handleChange('capacitance', parseFloat(e.target.value))}
+                        className="w-full bg-[#1a1b26] border border-[#414868] rounded px-2 py-1 text-white text-sm"
                     />
-                    <p className="text-[11px] text-[#565f89] italic">Acts as open circuit when charged.</p>
                 </div>
             )}
 
-            {/* LED - Dynamic Color Config (User Request) */}
-            {component.type === TYPES.LED && (
-                <div>
-                    <label className="block text-[#aaa] text-xs mb-1">LED Color</label>
+            {/* LED Color */}
+            {(component.type === TYPES.LED) && (
+                <div className="mb-4">
+                    <label className="block text-gray-400 text-xs mb-1">Color</label>
                     <select
-                        value={component.ledColor || 'red'}
+                        value={(component as any).ledColor || 'red'}
                         onChange={(e) => handleChange('ledColor', e.target.value)}
-                        className="w-full bg-[#1a1c23] text-white p-2 rounded border border-[#444] mb-2"
+                        className="w-full bg-[#1a1b26] border border-[#414868] rounded px-2 py-1 text-white text-sm"
                     >
-                        <option value="red">🔴 Red</option>
-                        <option value="green">🟢 Green</option>
-                        <option value="blue">🔵 Blue</option>
-                        <option value="yellow">🟡 Yellow</option>
-                        <option value="white">⚪ White</option>
+                        <option value="red">Red</option>
+                        <option value="green">Green</option>
+                        <option value="blue">Blue</option>
+                        <option value="yellow">Yellow</option>
+                        <option value="white">White</option>
                     </select>
                 </div>
             )}
 
-            {/* CHIP */}
-            {component.type === TYPES.CHIP && (
-                <div>
-                    <label className="block text-[#aaa] text-xs mb-1">Logic Type</label>
+            {/* Logic Gate Type */}
+            {(component.type === TYPES.CHIP) && (
+                <div className="mb-4">
+                    <label className="block text-gray-400 text-xs mb-1">Gate Type</label>
                     <select
-                        value={component.logic || 'AND'}
+                        value={(component as any).logic || 'AND'}
                         onChange={(e) => handleChange('logic', e.target.value)}
-                        className="w-full bg-[#1a1c23] text-white p-2 rounded border border-[#444]"
+                        className="w-full bg-[#1a1b26] border border-[#414868] rounded px-2 py-1 text-white text-sm"
                     >
                         <option value="AND">AND Gate</option>
                         <option value="OR">OR Gate</option>

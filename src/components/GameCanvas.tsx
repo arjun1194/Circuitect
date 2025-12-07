@@ -1,13 +1,13 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { useGameLoop, GameLoopController } from '../hooks/useGameLoop';
 import { theme } from '../config/theme';
 import { GRID_SIZE, ComponentType } from '../config/gameConfig';
-import { Component } from '../engine/Physics';
+import { AbstractComponent } from '../engine/Physics';
 
 interface GameCanvasProps {
     toolMode: string;
     selectedTool: ComponentType;
-    onComponentSelect: (c: Component) => void;
+    onComponentSelect: (c: AbstractComponent) => void;
     onMountController: (controller: GameLoopController) => void;
 }
 

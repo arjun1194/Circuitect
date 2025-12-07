@@ -1,6 +1,5 @@
-import React from 'react';
-import { TYPES, ComponentType } from '../../config/gameConfig';
-import { COMPONENT_DEFS } from '../../engine/ComponentDefinitions';
+import { ComponentType } from '../../config/gameConfig';
+import { COMPONENT_METADATA } from '../../config/ComponentMetadata';
 import clsx from 'clsx';
 
 interface ToolboxProps {
@@ -10,7 +9,7 @@ interface ToolboxProps {
     onSetMode: (m: string) => void;
 }
 
-export default function Toolbox({ selectedTool, onSelectTool, currentMode, onSetMode }: ToolboxProps) {
+export default function Toolbox({ selectedTool, onSelectTool }: ToolboxProps) {
     // Group by category
     const categories: Record<string, string[]> = {
         'Basic': [],
@@ -22,8 +21,9 @@ export default function Toolbox({ selectedTool, onSelectTool, currentMode, onSet
         'Abstraction': []
     };
 
-    Object.keys(COMPONENT_DEFS).forEach(type => {
-        const def = COMPONENT_DEFS[type];
+    Object.keys(COMPONENT_METADATA).forEach(key => {
+        const type = key as ComponentType;
+        const def = COMPONENT_METADATA[type];
         if (categories[def.category]) {
             categories[def.category].push(type);
         }
@@ -40,8 +40,9 @@ export default function Toolbox({ selectedTool, onSelectTool, currentMode, onSet
                         <div key={cat} className="mb-4">
                             <h3 className="text-[11px] uppercase tracking-wider text-[#565f89] font-bold mb-2">{cat}</h3>
                             <div className="space-y-1">
-                                {types.map(type => {
-                                    const def = COMPONENT_DEFS[type];
+                                {types.map(t => {
+                                    const type = t as ComponentType;
+                                    const def = COMPONENT_METADATA[type];
                                     return (
                                         <button
                                             key={type}

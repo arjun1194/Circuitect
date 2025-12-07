@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { STORAGE_KEY, TYPES, DEFAULT_BATTERY_VOLTAGE, ComponentType } from './config/gameConfig';
+import { useState, useEffect, useCallback } from 'react';
+import { STORAGE_KEY, TYPES, ComponentType } from './config/gameConfig';
 import { LEVELS } from './config/levels';
 import { theme } from './config/theme';
 import GameCanvas from './components/GameCanvas';
@@ -11,7 +11,7 @@ import FloatingControls from './components/UI/FloatingControls';
 
 import ValidationModal from './components/UI/ValidationModal';
 
-import { Component } from './engine/Physics';
+import { AbstractComponent } from './engine/Physics'; // AbstractComponent renamed
 import { GameLoopController } from './hooks/useGameLoop';
 
 function App() {
@@ -24,7 +24,7 @@ function App() {
   // Session State
   const [toolMode, setToolMode] = useState<string>('build'); // 'build' | 'measure'
   const [selectedTool, setSelectedTool] = useState<ComponentType>(TYPES.WIRE);
-  const [editingComponent, setEditingComponent] = useState<Component | null>(null);
+  const [editingComponent, setEditingComponent] = useState<AbstractComponent | null>(null);
   const [gameController, setGameController] = useState<GameLoopController | null>(null);
   const [hintsShown, setHintsShown] = useState<number>(0);
   const [validationResult, setValidationResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -88,7 +88,7 @@ function App() {
   }, [gameController]);
 
   // Mount Controller (from GameCanvas)
-  const onMountController = useCallback((ctrl) => {
+  const onMountController = useCallback((ctrl: GameLoopController) => {
     setGameController(ctrl);
   }, []);
 
@@ -152,12 +152,15 @@ function App() {
           <FloatingControls currentMode={toolMode} onSetMode={setToolMode} />
 
           {/* PROPERTY EDITOR OVERLAY */}
-          {editingComponent && (
-            <PropertyEditor
-              component={editingComponent}
-              onClose={() => setEditingComponent(null)}
-            />
-          )}
+          {editingComponent && (() => {
+            const comp = editingComponent as AbstractComponent;
+            return (
+              <PropertyEditor
+                component={comp}
+                onClose={() => setEditingComponent(null)}
+              />
+            );
+          })()}
 
           {/* VALIDATION MODAL */}
           {validationResult && (

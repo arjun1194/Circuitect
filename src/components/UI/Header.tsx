@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 interface HeaderProps {
     levelTitle: string;
@@ -13,7 +13,7 @@ interface HeaderProps {
 
 export default function Header({
     levelTitle,
-    onReset,
+
     onClear,
     onNextLevel,
     onShowHints,

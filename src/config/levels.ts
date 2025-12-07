@@ -5,7 +5,7 @@
  * Note: 'check' functions now accept (components) as argument instead of importing global state.
  */
 
-import { Component } from '../engine/Physics';
+import { AbstractComponent } from '../engine/Physics';
 import { TYPES } from './gameConfig';
 
 export interface Level {
@@ -13,7 +13,7 @@ export interface Level {
     desc: string;
     theory: string;
     hints: string[];
-    check: (components: Component[]) => boolean;
+    check: (components: AbstractComponent[]) => boolean;
 }
 
 export const LEVELS: Level[] = [
@@ -134,7 +134,7 @@ export const LEVELS: Level[] = [
             "Connect the chip to your circuit with inputs and output",
             "Test with different input combinations"
         ],
-        check: (components) => components.some(c => c.type === TYPES.CHIP && c.logic === 'XOR')
+        check: (components) => components.some(c => c.type === TYPES.CHIP && (c as any).logic === 'XOR')
     },
     {
         title: "10. The Half Adder",
@@ -147,7 +147,7 @@ export const LEVELS: Level[] = [
             "Both chips should receive the same two input signals",
             "Connect outputs to LEDs to visualize Sum and Carry results"
         ],
-        check: (components) => components.some(c => c.logic === 'XOR') &&
-            components.some(c => c.logic === 'AND')
+        check: (components) => components.some(c => (c as any).logic === 'XOR') &&
+            components.some(c => (c as any).logic === 'AND')
     }
 ];

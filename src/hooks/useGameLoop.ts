@@ -1,12 +1,13 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { Renderer } from '../engine/Renderer';
-import { physicsStep, CircuitNode, Component } from '../engine/Physics';
+import { physicsStep, CircuitNode, AbstractComponent } from '../engine/Physics';
 import { GRID_SIZE, TYPES, ComponentType } from '../config/gameConfig';
+import { ComponentFactory } from '../engine/ComponentFactory';
 
 
 interface GameState {
     nodes: CircuitNode[];
-    components: Component[];
+    components: AbstractComponent[];
     renderer: Renderer | null;
     dragStart: { x: number; y: number } | null;
     currentMouse: { x: number; y: number } | null;
@@ -20,14 +21,14 @@ export interface GameLoopController {
     handleMouseMove: (e: React.MouseEvent<HTMLCanvasElement>) => void;
     handleMouseUp: (e: React.MouseEvent<HTMLCanvasElement>) => void;
     clear: () => void;
-    getComponents: () => Component[];
+    getComponents: () => AbstractComponent[];
 }
 
 export function useGameLoop(
     canvasRef: React.RefObject<HTMLCanvasElement | null>,
     toolMode: string,
     selectedTool: ComponentType,
-    onComponentSelect: (c: Component) => void
+    onComponentSelect: (c: AbstractComponent) => void
 ): GameLoopController {
     // Game State (Refs for mutable game loop state to avoid re-renders)
     const stateRef = useRef<GameState>({
@@ -78,7 +79,7 @@ export function useGameLoop(
                 dragStart: state.dragStart,
                 currentMouse: state.currentMouse,
                 isDragging: state.isDragging,
-                mode: toolMode
+                toolMode: toolMode
             });
 
             // FPS Calculation (optional)
@@ -172,7 +173,7 @@ export function useGameLoop(
                 const n1 = getOrCreateNode(state.dragStart.x, state.dragStart.y);
                 const n2 = getOrCreateNode(end.x, end.y);
 
-                const newComp = new Component(selectedTool, n1, n2);
+                const newComp = ComponentFactory.create(selectedTool, n1, n2);
 
                 state.components.push(newComp);
                 n1.connections.push(newComp);

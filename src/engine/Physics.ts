@@ -1,12 +1,12 @@
-import { TYPES, UPDATE_ITERATIONS, DEFAULT_BATTERY_VOLTAGE, ComponentType } from '../config/gameConfig';
-import { COMPONENT_DEFS } from './ComponentDefinitions';
+import { TYPES, UPDATE_ITERATIONS, ComponentType } from '../config/gameConfig';
+
 
 export class CircuitNode {
     x: number;
     y: number;
     voltage: number;
     fixed: boolean;
-    connections: Component[]; // Array of Component instances
+    connections: AbstractComponent[]; // Array of Component instances
 
     constructor(x: number, y: number) {
         this.x = x;
@@ -17,7 +17,7 @@ export class CircuitNode {
     }
 }
 
-export class Component {
+export abstract class AbstractComponent {
     type: ComponentType;
     n1: CircuitNode;
     n2: CircuitNode;
@@ -25,11 +25,6 @@ export class Component {
     current: number;
     param: number; // State param (e.g. switch on/off, LED state)
     particles: number[];
-    resistance: number;
-    capacitance: number;
-    logic: string;
-    voltage: number;
-    ledColor?: string;
 
     constructor(type: ComponentType, n1: CircuitNode, n2: CircuitNode) {
         this.type = type;
@@ -42,38 +37,20 @@ export class Component {
         for (let i = 0; i < 3; i++) {
             this.particles.push(Math.random());
         }
-
-        const def = COMPONENT_DEFS[type];
-        this.resistance = def.r || 100;
-        this.capacitance = 10;
-        this.logic = 'AND';
-        this.voltage = def.voltage || DEFAULT_BATTERY_VOLTAGE;
-
-        // Custom props
-        if (type === TYPES.LED) {
-            this.ledColor = 'red';
-        }
     }
 
-    getResistance(): number {
-        if (this.type === TYPES.WIRE) return 0.1;
-        if (this.type === TYPES.SWITCH) return this.param === 1 ? 0.1 : 999999999;
-        if (this.type === TYPES.TRANSISTOR) return 1000000;
-        if (this.type === TYPES.CHIP) return 10000;
-        if (this.type === TYPES.RESISTOR) return this.resistance;
-        if (this.type === TYPES.CAPACITOR) return 1000000;
-        return this.resistance;
-    }
+    abstract draw(ctx: CanvasRenderingContext2D, theme: any): void;
+    abstract getResistance(): number;
 
     getSourceVoltage(): number {
-        return (this.type === TYPES.BATTERY) ? this.voltage : 0;
+        return 0;
     }
 }
 
 /**
  * Run one step of circuit simulation
  */
-export function physicsStep(nodes: CircuitNode[], components: Component[]) {
+export function physicsStep(nodes: CircuitNode[], components: AbstractComponent[]) {
     nodes.forEach(n => { n.fixed = false; });
 
     for (let iter = 0; iter < UPDATE_ITERATIONS; iter++) {
@@ -81,7 +58,7 @@ export function physicsStep(nodes: CircuitNode[], components: Component[]) {
             if (node.fixed) return;
 
             let numerator = 0;
-            let denominator = 0;
+            let denominator = 0.000001; // 1 MOhm pull-down resistor to prevent floating voltages
             let hasBatteryNegative = false;
 
             node.connections.forEach(comp => {
@@ -128,10 +105,10 @@ export function physicsStep(nodes: CircuitNode[], components: Component[]) {
                     const valA = inputs[0] ? inputs[0].voltage > 2 : false;
                     const valB = inputs[1] ? inputs[1].voltage > 2 : false;
 
-                    if (comp.logic === 'AND') signal = valA && valB;
-                    if (comp.logic === 'OR') signal = valA || valB;
-                    if (comp.logic === 'NAND') signal = !(valA && valB);
-                    if (comp.logic === 'XOR') signal = (valA !== valB);
+                    if ((comp as any).logic === 'AND') signal = valA && valB;
+                    if ((comp as any).logic === 'OR') signal = valA || valB;
+                    if ((comp as any).logic === 'NAND') signal = !(valA && valB);
+                    if ((comp as any).logic === 'XOR') signal = (valA !== valB);
 
                     if (comp.n1 === node) {
                         const target = signal ? 9 : 0;
@@ -173,9 +150,13 @@ export function physicsStep(nodes: CircuitNode[], components: Component[]) {
 
     // Update component states (Current, LED param)
     components.forEach(c => {
-        const vDiff = c.n1.voltage - c.n2.voltage;
-        const R = c.getResistance();
-        c.current = vDiff / Math.max(0.1, R);
+        if (c.type === TYPES.BATTERY) {
+            c.current = 0; // Don't visualize internal flow for batteries to avoid "ghost current"
+        } else {
+            const vDiff = c.n1.voltage - c.n2.voltage;
+            const R = c.getResistance();
+            c.current = vDiff / Math.max(0.01, R);
+        }
 
         if (c.type === TYPES.LED) {
             c.param = (c.n1.voltage > c.n2.voltage + 1.5) ? 1 : 0;

@@ -1,6 +1,6 @@
-import React from 'react';
+
 import clsx from 'clsx';
-import { MousePointer2, Ruler, Wrench, Zap } from 'lucide-react';
+import { Wrench, Zap } from 'lucide-react';
 
 interface FloatingControlsProps {
     currentMode: string;

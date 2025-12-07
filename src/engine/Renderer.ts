@@ -3,9 +3,9 @@
  * Handles canvas drawing operations
  */
 
-import { CircuitNode, Component } from './Physics';
-import { COMPONENT_DEFS } from './ComponentDefinitions';
+import { CircuitNode, AbstractComponent } from './Physics';
 import { theme } from '../config/theme';
+import { TYPES } from '../config/gameConfig';
 
 export class Renderer {
     ctx: CanvasRenderingContext2D;
@@ -29,7 +29,7 @@ export class Renderer {
         this.ctx.clearRect(0, 0, this.width, this.height);
     }
 
-    drawCurrent(c: Component) {
+    drawCurrent(c: AbstractComponent) {
         if (!c.particles) {
             c.particles = [];
             for (let i = 0; i < 3; i++) c.particles.push(Math.random());
@@ -52,52 +52,28 @@ export class Renderer {
         });
     }
 
-    render(components: Component[], nodes: CircuitNode[], interactionState: any) {
+    render(components: AbstractComponent[], nodes: CircuitNode[], interactionState: any) {
         this.clear();
 
         // 1. Components
         components.forEach(c => {
-            const def = COMPONENT_DEFS[c.type];
-            if (!def) return;
-
-            // Special handling for WIRE (Draw line directly)
-            if (c.type === 'WIRE') {
-                this.ctx.beginPath();
-                this.ctx.strokeStyle = def.color || theme.colors.wire;
-                this.ctx.lineWidth = 3;
-                this.ctx.moveTo(c.n1.x, c.n1.y);
-                this.ctx.lineTo(c.n2.x, c.n2.y);
-                this.ctx.stroke();
-
-                // Draw particles for current
-                if (Math.abs(c.current) > 0.001) {
-                    this.drawCurrent(c);
-                }
-                return;
-            }
-
-            // Other Components: Transform Context
-            const midX = (c.n1.x + c.n2.x) / 2;
-            const midY = (c.n1.y + c.n2.y) / 2;
-            const angle = Math.atan2(c.n2.y - c.n1.y, c.n2.x - c.n1.x);
-
             this.ctx.save();
-            this.ctx.translate(midX, midY);
-            this.ctx.rotate(angle);
 
-            // Dynamic color handling (e.g. LED)
-            // (Passed to draw or handled inside draw? ComponentDefinitions handles color logic partially but we can pass params)
-
-            if (def.draw) {
-                // def.draw signature: (ctx, param, c, theme)
-                // Use type assertion if needed as signatures vary slightly or fix ComponentDefinitions types
-                (def as any).draw(this.ctx, c.param, c, theme);
+            // Apply coordinate transformation for non-wire components
+            // They expect (0,0) to be their center and aligned horizontally
+            if (c.type !== TYPES.WIRE) {
+                const cx = (c.n1.x + c.n2.x) / 2;
+                const cy = (c.n1.y + c.n2.y) / 2;
+                const angle = Math.atan2(c.n2.y - c.n1.y, c.n2.x - c.n1.x);
+                this.ctx.translate(cx, cy);
+                this.ctx.rotate(angle);
             }
 
+            // Draw Component (Delegated to subclass)
+            c.draw(this.ctx, theme);
             this.ctx.restore();
 
-            // Draw particles for current (on top, untransformed? or transformed?)
-            // drawCurrent uses n1/n2 which are absolute. So call it outside transform.
+            // Draw particles for current (Global visualization overlay)
             if (Math.abs(c.current) > 0.001) {
                 this.drawCurrent(c);
             }
