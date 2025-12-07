@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { STORAGE_KEY, TYPES, ComponentType } from './config/gameConfig';
 import { LEVELS } from './config/levels';
+import { LEVEL_SOLUTIONS } from './config/solutions';
 import GameCanvas from './components/GameCanvas';
 import Header from './components/UI/Header';
 import Toolbox from './components/UI/Toolbox';
@@ -109,6 +110,18 @@ function App() {
     }
   }, [gameController]);
 
+  const handleShowSolution = useCallback(() => {
+    if (!gameController) return;
+    if (!confirm('This will clear your current circuit and load the solution. Continue?')) {
+      return;
+    }
+    const solution = LEVEL_SOLUTIONS[levelIndex];
+    if (solution) {
+      const json = JSON.stringify(solution);
+      gameController.importCircuit(json);
+    }
+  }, [gameController, levelIndex]);
+
   const onMountController = useCallback((ctrl: GameLoopController) => {
     setGameController(ctrl);
   }, []);
@@ -121,6 +134,7 @@ function App() {
         onClear={handleClearBoard}
         onNextLevel={handleTestCircuit}
         onShowHints={handleShowHint}
+        onShowSolution={handleShowSolution}
         onResetProgress={handleResetProgress}
         onExport={handleExport}
         onImport={handleImport}

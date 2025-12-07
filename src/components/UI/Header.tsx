@@ -6,6 +6,7 @@ interface HeaderProps {
     onClear: () => void;
     onNextLevel: () => void;
     onShowHints: () => void;
+    onShowSolution: () => void;
     onResetProgress: () => void;
     onExport: () => void;
     onImport: (json: string) => void;
@@ -19,6 +20,7 @@ export default function Header({
     onClear,
     onNextLevel,
     onShowHints,
+    onShowSolution,
     onResetProgress,
     onExport,
     onImport,
@@ -58,6 +60,13 @@ export default function Header({
                     className="bg-transparent border border-[#7aa2f7] text-[#7aa2f7] px-4 py-2 rounded font-bold text-sm hover:bg-[#7aa2f7] hover:text-[#1a1c23] transition-colors"
                 >
                     Show Hint
+                </button>
+                <button
+                    onClick={onShowSolution}
+                    className="bg-transparent border border-[#bb9af7] text-[#bb9af7] px-4 py-2 rounded font-bold text-sm hover:bg-[#bb9af7] hover:text-[#1a1c23] transition-colors"
+                    title="Load the correct solution for this level"
+                >
+                    See Solution
                 </button>
                 <button
                     onClick={onNextLevel}
