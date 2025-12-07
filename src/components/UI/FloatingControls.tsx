@@ -1,20 +1,20 @@
-
 import clsx from 'clsx';
 import { Wrench, Zap } from 'lucide-react';
+import { ToolMode } from '../../types';
 
 interface FloatingControlsProps {
-    currentMode: string;
-    onSetMode: (mode: string) => void;
+    currentMode: ToolMode;
+    onSetMode: (mode: ToolMode) => void;
 }
 
 export default function FloatingControls({ currentMode, onSetMode }: FloatingControlsProps) {
     return (
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-[#24283b] p-1.5 rounded-full border border-[#414868] shadow-2xl flex gap-1 z-50">
             <button
-                onClick={() => onSetMode('build')}
+                onClick={() => onSetMode(ToolMode.BUILD)}
                 className={clsx(
                     "flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all",
-                    currentMode === 'build'
+                    currentMode === ToolMode.BUILD
                         ? "bg-[#7aa2f7] text-[#1a1c23] shadow-lg scale-105"
                         : "text-[#9aa5ce] hover:bg-[#2f3549] hover:text-white"
                 )}
@@ -24,10 +24,10 @@ export default function FloatingControls({ currentMode, onSetMode }: FloatingCon
             </button>
             <div className="w-px bg-[#414868] my-2"></div>
             <button
-                onClick={() => onSetMode('measure')}
+                onClick={() => onSetMode(ToolMode.MEASURE)}
                 className={clsx(
                     "flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all",
-                    currentMode === 'measure'
+                    currentMode === ToolMode.MEASURE
                         ? "bg-[#e0af68] text-[#1a1c23] shadow-lg scale-105"
                         : "text-[#9aa5ce] hover:bg-[#2f3549] hover:text-white"
                 )}
@@ -38,3 +38,4 @@ export default function FloatingControls({ currentMode, onSetMode }: FloatingCon
         </div>
     );
 }
+

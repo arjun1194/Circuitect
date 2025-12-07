@@ -11,7 +11,7 @@ export class Battery extends AbstractComponent {
     }
 
     getResistance(): number {
-        return 100;
+        return 0;
     }
 
     override getSourceVoltage(): number {

@@ -1,18 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { STORAGE_KEY, TYPES, ComponentType } from './config/gameConfig';
 import { LEVELS } from './config/levels';
-import { theme } from './config/theme';
 import GameCanvas from './components/GameCanvas';
 import Header from './components/UI/Header';
 import Toolbox from './components/UI/Toolbox';
 import PropertyEditor from './components/UI/PropertyEditor';
-
 import FloatingControls from './components/UI/FloatingControls';
-
 import ValidationModal from './components/UI/ValidationModal';
+import LevelHUD from './components/UI/LevelHUD';
+import HintsPanel from './components/UI/HintsPanel';
 
-import { AbstractComponent } from './engine/Physics'; // AbstractComponent renamed
+import { AbstractComponent } from './engine/Physics';
 import { GameLoopController } from './hooks/useGameLoop';
+import { useLevelProgress } from './hooks/useLevelProgress';
+import { useThemeInjection } from './hooks/useThemeInjection';
+import { ToolMode } from './types';
 
 function App() {
   // Persistent State
@@ -22,7 +24,7 @@ function App() {
   });
 
   // Session State
-  const [toolMode, setToolMode] = useState<string>('build'); // 'build' | 'measure'
+  const [toolMode, setToolMode] = useState<ToolMode>(ToolMode.BUILD);
   const [selectedTool, setSelectedTool] = useState<ComponentType>(TYPES.WIRE);
   const [editingComponent, setEditingComponent] = useState<AbstractComponent | null>(null);
   const [gameController, setGameController] = useState<GameLoopController | null>(null);
@@ -31,14 +33,9 @@ function App() {
 
   const currentLevel = LEVELS[levelIndex];
 
-  // Persist level progress
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    const maxLevel = saved ? parseInt(saved) : 0;
-    if (levelIndex > maxLevel) {
-      localStorage.setItem(STORAGE_KEY, levelIndex.toString());
-    }
-  }, [levelIndex]);
+  // Custom Hooks
+  useLevelProgress(levelIndex, levelIndex);
+  useThemeInjection();
 
   // Handlers
   const handleResetProgress = () => {
@@ -75,7 +72,6 @@ function App() {
       handleClearBoard();
       setHintsShown(0);
     } else {
-      // Game Finished logic (maybe just a toast or stay on last level)
       alert("Configuration complete! You've beaten the game.");
     }
   };
@@ -87,16 +83,12 @@ function App() {
     setValidationResult(null);
   }, [gameController]);
 
-  // Mount Controller (from GameCanvas)
+  const handleShowHint = useCallback(() => {
+    setHintsShown(prev => Math.min(prev + 1, currentLevel.hints.length));
+  }, [currentLevel.hints.length]);
+
   const onMountController = useCallback((ctrl: GameLoopController) => {
     setGameController(ctrl);
-  }, []);
-
-  // Theme Injection for CSS Variables
-  useEffect(() => {
-    Object.entries(theme.colors).forEach(([key, value]) => {
-      document.documentElement.style.setProperty(`--${key}-color`, value);
-    });
   }, []);
 
   return (
@@ -106,7 +98,7 @@ function App() {
         onReset={handleClearBoard}
         onClear={handleClearBoard}
         onNextLevel={handleTestCircuit}
-        onShowHints={() => setHintsShown(prev => Math.min(prev + 1, currentLevel.hints.length))}
+        onShowHints={handleShowHint}
         onResetProgress={handleResetProgress}
         isLastLevel={levelIndex === LEVELS.length - 1}
         actionLabel="Test Circuit"
@@ -114,32 +106,18 @@ function App() {
 
       <div className="flex flex-1 overflow-hidden relative">
 
-        {/* GAME AREA - Now first in flex order, taking remaining space */}
+        {/* GAME AREA */}
         <div className="flex-1 flex flex-col relative order-1">
 
-          {/* HUD: Level Info */}
-          <div className="absolute top-5 left-5 pointer-events-none z-10 max-w-md">
-            <div className="bg-[#24283b]/95 border border-[#7aa2f7] p-5 rounded-xl shadow-2xl backdrop-blur-sm pointer-events-auto">
-              <h2 className="text-[#7aa2f7] font-bold text-lg mb-2">{currentLevel.title}</h2>
-              <p className="text-sm leading-relaxed mb-3 text-white">{currentLevel.desc}</p>
-
-              <div className="border-t border-[#414868] pt-3 mt-3">
-                <p className="text-xs text-[#9aa5ce] italic">{currentLevel.theory}</p>
-              </div>
-
-              {/* Hints */}
-              {hintsShown > 0 && (
-                <div className="mt-3 bg-[#7aa2f7]/10 border-l-4 border-[#7aa2f7] p-3 rounded text-xs text-[#7aa2f7]">
-                  <strong>💡 Hints:</strong>
-                  <ul className="mt-1 list-inside space-y-1">
-                    {currentLevel.hints.slice(0, hintsShown).map((h, i) => (
-                      <li key={i}>{i + 1}. {h}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Level HUD with Hints */}
+          <LevelHUD
+            level={currentLevel}
+            levelIndex={levelIndex}
+            hintsShown={hintsShown}
+            onShowHint={handleShowHint}
+          >
+            <HintsPanel hints={currentLevel.hints} hintsShown={hintsShown} />
+          </LevelHUD>
 
           <GameCanvas
             toolMode={toolMode}
@@ -174,7 +152,7 @@ function App() {
           )}
         </div>
 
-        {/* TOOLBOX - Now second in flex order (Right Side) */}
+        {/* TOOLBOX */}
         <div className="order-2 border-l border-[#333] shadow-lg z-20 h-full bg-[#24283b]">
           <Toolbox
             selectedTool={selectedTool}
@@ -190,3 +168,4 @@ function App() {
 }
 
 export default App;
+

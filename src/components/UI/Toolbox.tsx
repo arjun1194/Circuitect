@@ -1,41 +1,46 @@
+import { useMemo } from 'react';
 import { ComponentType } from '../../config/gameConfig';
 import { COMPONENT_METADATA } from '../../config/ComponentMetadata';
 import clsx from 'clsx';
+import { ToolMode } from '../../types';
 
 interface ToolboxProps {
     selectedTool: ComponentType;
     onSelectTool: (t: ComponentType) => void;
-    currentMode: string;
-    onSetMode: (m: string) => void;
+    currentMode: ToolMode;
+    onSetMode: (m: ToolMode) => void;
 }
 
 export default function Toolbox({ selectedTool, onSelectTool }: ToolboxProps) {
-    // Group by category
-    const categories: Record<string, string[]> = {
-        'Basic': [],
-        'Passive': [],
-        'Active': [],
-        'Power': [],
-        'Control': [],
-        'Output': [],
-        'Abstraction': []
-    };
+    // Memoize categories to prevent recalculation on every render
+    const categoryEntries = useMemo(() => {
+        const categories: Record<string, string[]> = {
+            'Basic': [],
+            'Passive': [],
+            'Active': [],
+            'Power': [],
+            'Control': [],
+            'Output': [],
+            'Abstraction': []
+        };
 
-    Object.keys(COMPONENT_METADATA).forEach(key => {
-        const type = key as ComponentType;
-        const def = COMPONENT_METADATA[type];
-        if (categories[def.category]) {
-            categories[def.category].push(type);
-        }
-    });
+        Object.keys(COMPONENT_METADATA).forEach(key => {
+            const type = key as ComponentType;
+            const def = COMPONENT_METADATA[type];
+            if (categories[def.category]) {
+                categories[def.category].push(type);
+            }
+        });
+
+        return Object.entries(categories).filter(([, types]) => types.length > 0);
+    }, []);
 
     return (
         <div className="w-60 bg-[#24283b] flex flex-col p-4 border-l border-[#333] shadow-lg overflow-y-auto">
 
             {/* Components List */}
             <div className="flex-1 overflow-y-auto mt-4">
-                {Object.entries(categories).map(([cat, types]) => {
-                    if (types.length === 0) return null;
+                {categoryEntries.map(([cat, types]) => {
                     return (
                         <div key={cat} className="mb-4">
                             <h3 className="text-[11px] uppercase tracking-wider text-[#565f89] font-bold mb-2">{cat}</h3>

@@ -21,6 +21,7 @@ export default function PropertyEditor({ component, onClose }: PropertyEditorPro
         forceUpdate({}); // Re-render this component
     };
 
+    // TODO: Make this a directory and refactor each component type render into its own file
     return (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#24283b] p-6 rounded-lg border border-[#7aa2f7] shadow-xl z-50 w-80">
             <div className="flex justify-between items-center mb-4">

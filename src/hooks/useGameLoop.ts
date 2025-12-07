@@ -24,6 +24,8 @@ export interface GameLoopController {
     getComponents: () => AbstractComponent[];
 }
 
+// TODO: this file is too big, separate into smaller hooks and compose
+// TODO: extract functions into relevant files
 export function useGameLoop(
     canvasRef: React.RefObject<HTMLCanvasElement | null>,
     toolMode: string,

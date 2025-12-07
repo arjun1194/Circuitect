@@ -1,12 +1,21 @@
 /**
  * Circuit Architect - Level Definitions
  * Comprehensive level content with descriptions, theory, and hints.
- * 
- * Note: 'check' functions now accept (components) as argument instead of importing global state.
  */
 
 import { AbstractComponent } from '../engine/Physics';
-import { TYPES } from './gameConfig';
+import {
+    checkClosedLoop,
+    checkSwitchControl,
+    checkCurrentLimiting,
+    checkParallelLEDs,
+    checkCapacitor,
+    checkTransistorSwitch,
+    checkNotGate,
+    checkAndGateSwitches,
+    checkXorChip,
+    checkHalfAdder
+} from './levelCheckers';
 
 export interface Level {
     title: string;
@@ -27,7 +36,7 @@ export const LEVELS: Level[] = [
             "Use Wires to connect the battery's positive terminal (gold end) to one side of the LED",
             "Complete the circuit by connecting the other side of the LED back to the battery's negative terminal (silver end)"
         ],
-        check: (components) => components.some(c => c.type === TYPES.LED && c.param === 1)
+        check: checkClosedLoop
     },
     {
         title: "2. Control with a Switch",
@@ -40,8 +49,7 @@ export const LEVELS: Level[] = [
             "Complete the loop back to the battery's negative terminal",
             "Click on the switch to toggle it on/off and control the LED"
         ],
-        check: (components) => components.some(c => c.type === TYPES.LED && c.param === 1) &&
-            components.some(c => c.type === TYPES.SWITCH)
+        check: checkSwitchControl
     },
     {
         title: "3. Current Limiting Resistor",
@@ -54,8 +62,7 @@ export const LEVELS: Level[] = [
             "Complete the circuit back to the battery",
             "Click on the resistor to change its resistance value if needed"
         ],
-        check: (components) => components.some(c => c.type === TYPES.RESISTOR) &&
-            components.some(c => c.type === TYPES.LED && c.param === 1)
+        check: checkCurrentLimiting
     },
     {
         title: "4. Parallel LEDs",
@@ -68,7 +75,7 @@ export const LEVELS: Level[] = [
             "Both LEDs should share connection points on both ends",
             "Complete the circuit - both LEDs will light up together"
         ],
-        check: (components) => components.filter(c => c.type === TYPES.LED && c.param === 1).length >= 2
+        check: checkParallelLEDs
     },
     {
         title: "5. Understanding Capacitors",
@@ -81,7 +88,7 @@ export const LEVELS: Level[] = [
             "Notice how the capacitor behaves in the simulation",
             "Try clicking on it to see and modify its capacitance value"
         ],
-        check: (components) => components.some(c => c.type === TYPES.CAPACITOR)
+        check: checkCapacitor
     },
     {
         title: "6. Transistor as a Switch",
@@ -94,8 +101,7 @@ export const LEVELS: Level[] = [
             "Connect an LED to the Collector/Emitter path",
             "Apply voltage to the Base to turn on the transistor and light the LED"
         ],
-        check: (components) => components.some(c => c.type === TYPES.TRANSISTOR) &&
-            components.some(c => c.type === TYPES.LED && c.param === 1)
+        check: checkTransistorSwitch
     },
     {
         title: "7. Building a NOT Gate (Inverter)",
@@ -108,7 +114,7 @@ export const LEVELS: Level[] = [
             "The Emitter connects to ground (battery negative)",
             "Apply a signal to the Base and observe the inverted output"
         ],
-        check: (components) => components.some(c => c.type === TYPES.TRANSISTOR)
+        check: checkNotGate
     },
     {
         title: "8. AND Gate with Switches",
@@ -121,7 +127,7 @@ export const LEVELS: Level[] = [
             "Connect an LED after both switches",
             "Complete the circuit - LED lights only when BOTH switches are ON"
         ],
-        check: (components) => components.filter(c => c.type === TYPES.SWITCH).length >= 2
+        check: checkAndGateSwitches
     },
     {
         title: "9. Using Logic Chips - XOR",
@@ -134,7 +140,7 @@ export const LEVELS: Level[] = [
             "Connect the chip to your circuit with inputs and output",
             "Test with different input combinations"
         ],
-        check: (components) => components.some(c => c.type === TYPES.CHIP && (c as any).logic === 'XOR')
+        check: checkXorChip
     },
     {
         title: "10. The Half Adder",
@@ -147,7 +153,7 @@ export const LEVELS: Level[] = [
             "Both chips should receive the same two input signals",
             "Connect outputs to LEDs to visualize Sum and Carry results"
         ],
-        check: (components) => components.some(c => (c as any).logic === 'XOR') &&
-            components.some(c => (c as any).logic === 'AND')
+        check: checkHalfAdder
     }
 ];
+
