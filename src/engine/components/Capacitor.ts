@@ -22,8 +22,8 @@ export class Capacitor extends AbstractComponent {
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(-halfDist, 0);
-        ctx.lineTo(-2, 0);
-        ctx.moveTo(2, 0);
+        ctx.lineTo(-10, 0);
+        ctx.moveTo(10, 0);
         ctx.lineTo(halfDist, 0);
         ctx.stroke();
 

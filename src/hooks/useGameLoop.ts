@@ -3,6 +3,7 @@ import { Renderer } from '../engine/Renderer';
 import { physicsStep, CircuitNode, AbstractComponent } from '../engine/Physics';
 import { GRID_SIZE, TYPES, ComponentType } from '../config/gameConfig';
 import { ComponentFactory } from '../engine/ComponentFactory';
+import { circuitToJson, circuitFromJson } from '../utils/CircuitSerializer';
 
 
 interface GameState {
@@ -22,6 +23,9 @@ export interface GameLoopController {
     handleMouseUp: (e: React.MouseEvent<HTMLCanvasElement>) => void;
     clear: () => void;
     getComponents: () => AbstractComponent[];
+    getNodes: () => CircuitNode[];
+    exportCircuit: () => string;
+    importCircuit: (json: string) => boolean;
 }
 
 // TODO: this file is too big, separate into smaller hooks and compose
@@ -177,6 +181,22 @@ export function useGameLoop(
 
                 const newComp = ComponentFactory.create(selectedTool, n1, n2);
 
+                // For transistors, create a third node for the base
+                if (selectedTool === TYPES.TRANSISTOR) {
+                    // Calculate base node position (perpendicular to the component, offset from center)
+                    const midX = (n1.x + n2.x) / 2;
+                    const midY = (n1.y + n2.y) / 2;
+                    const angle = Math.atan2(n2.y - n1.y, n2.x - n1.x);
+                    // Base is perpendicular, offset by ~20px (grid aligned)
+                    const baseOffset = GRID_SIZE;
+                    const baseX = Math.round((midX + Math.sin(angle) * baseOffset) / GRID_SIZE) * GRID_SIZE;
+                    const baseY = Math.round((midY - Math.cos(angle) * baseOffset) / GRID_SIZE) * GRID_SIZE;
+
+                    const n3 = getOrCreateNode(baseX, baseY);
+                    newComp.n3 = n3;
+                    n3.connections.push(newComp);
+                }
+
                 state.components.push(newComp);
                 n1.connections.push(newComp);
                 n2.connections.push(newComp);
@@ -193,12 +213,33 @@ export function useGameLoop(
     };
 
     const getComponents = () => stateRef.current.components;
+    const getNodes = () => stateRef.current.nodes;
+
+    const exportCircuit = useCallback((): string => {
+        const state = stateRef.current;
+        return circuitToJson(state.nodes, state.components);
+    }, []);
+
+    const importCircuit = useCallback((json: string): boolean => {
+        try {
+            const { nodes, components } = circuitFromJson(json);
+            stateRef.current.nodes = nodes;
+            stateRef.current.components = components;
+            return true;
+        } catch (error) {
+            console.error('Failed to import circuit:', error);
+            return false;
+        }
+    }, []);
 
     return {
         handleMouseDown,
         handleMouseMove,
         handleMouseUp,
         clear,
-        getComponents
+        getComponents,
+        getNodes,
+        exportCircuit,
+        importCircuit
     };
 }

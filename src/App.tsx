@@ -87,6 +87,28 @@ function App() {
     setHintsShown(prev => Math.min(prev + 1, currentLevel.hints.length));
   }, [currentLevel.hints.length]);
 
+  const handleExport = useCallback(() => {
+    if (!gameController) return;
+    const json = gameController.exportCircuit();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'circuit.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [gameController]);
+
+  const handleImport = useCallback((json: string) => {
+    if (!gameController) return;
+    const success = gameController.importCircuit(json);
+    if (!success) {
+      alert('Failed to import circuit. The file may be corrupted or invalid.');
+    }
+  }, [gameController]);
+
   const onMountController = useCallback((ctrl: GameLoopController) => {
     setGameController(ctrl);
   }, []);
@@ -100,6 +122,8 @@ function App() {
         onNextLevel={handleTestCircuit}
         onShowHints={handleShowHint}
         onResetProgress={handleResetProgress}
+        onExport={handleExport}
+        onImport={handleImport}
         isLastLevel={levelIndex === LEVELS.length - 1}
         actionLabel="Test Circuit"
       />

@@ -33,6 +33,16 @@ export class Transistor extends AbstractComponent {
         ctx.fillStyle = '#C0C0C0';
         ctx.beginPath(); ctx.arc(-6, 8, 2, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(6, 8, 2, 0, Math.PI * 2); ctx.fill();
+
+        // Draw base lead (extends perpendicular from center)
+        ctx.strokeStyle = theme.colors.wire || '#565f89';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -25); // Extend to where n3 node will be (GRID_SIZE = 25)
+        ctx.stroke();
+
+        // Base connection point
         ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2);
         ctx.fillStyle = '#fff';
         ctx.fill();

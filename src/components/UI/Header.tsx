@@ -1,4 +1,4 @@
-
+import ExportImportButtons from './ExportImportButtons';
 
 interface HeaderProps {
     levelTitle: string;
@@ -7,6 +7,8 @@ interface HeaderProps {
     onNextLevel: () => void;
     onShowHints: () => void;
     onResetProgress: () => void;
+    onExport: () => void;
+    onImport: (json: string) => void;
     isLastLevel: boolean;
     actionLabel?: string;
 }
@@ -18,6 +20,8 @@ export default function Header({
     onNextLevel,
     onShowHints,
     onResetProgress,
+    onExport,
+    onImport,
     isLastLevel,
     actionLabel
 }: HeaderProps) {
@@ -34,6 +38,8 @@ export default function Header({
             </div>
 
             <div className="flex items-center gap-3">
+                <ExportImportButtons onExport={onExport} onImport={onImport} />
+                <div className="h-6 w-px bg-[#414868]"></div>
                 <button
                     onClick={onResetProgress}
                     className="px-3 py-1.5 text-xs text-[#565f89] border border-[#414868] rounded hover:bg-[#2f3549] transition-colors"
