@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { Renderer } from '../engine/Renderer';
 import { physicsStep, CircuitNode, AbstractComponent } from '../engine/Physics';
 import { GRID_SIZE, TYPES, ComponentType } from '../config/gameConfig';
@@ -232,7 +232,7 @@ export function useGameLoop(
         }
     }, []);
 
-    return {
+    return useMemo(() => ({
         handleMouseDown,
         handleMouseMove,
         handleMouseUp,
@@ -241,5 +241,5 @@ export function useGameLoop(
         getNodes,
         exportCircuit,
         importCircuit
-    };
+    }), [handleMouseDown, handleMouseMove, handleMouseUp, exportCircuit, importCircuit]);
 }
