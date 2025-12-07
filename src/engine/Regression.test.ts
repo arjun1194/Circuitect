@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CircuitNode, physicsStep, AbstractComponent } from './Physics';
-import { Battery, LED } from './components/AdvancedComponents';
-import { Wire } from './components/BasicComponents';
+import { Battery, LED, Wire } from './components';
 
 describe('Regression Tests', () => {
 

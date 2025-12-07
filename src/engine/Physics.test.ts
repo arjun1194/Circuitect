@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { CircuitNode, physicsStep } from './Physics';
-import { Wire, Resistor, Switch } from './components/BasicComponents';
-import { Battery } from './components/AdvancedComponents';
+import { Wire, Resistor, Switch, Battery } from './components';
 import { DEFAULT_BATTERY_VOLTAGE } from '../config/gameConfig';
 
 describe('Physics Engine', () => {

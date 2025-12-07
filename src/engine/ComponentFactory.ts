@@ -1,7 +1,6 @@
 import { AbstractComponent, CircuitNode } from './Physics';
 import { TYPES, ComponentType } from '../config/gameConfig';
-import { Wire, Resistor, Switch, Capacitor } from './components/BasicComponents';
-import { Battery, LED, Transistor, LogicChip } from './components/AdvancedComponents';
+import { Wire, Resistor, Switch, Capacitor, Battery, LED, Transistor, LogicChip } from './components';
 
 export class ComponentFactory {
     static create(type: ComponentType, n1: CircuitNode, n2: CircuitNode): AbstractComponent {
