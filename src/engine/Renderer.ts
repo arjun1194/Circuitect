@@ -73,6 +73,21 @@ export class Renderer {
             c.draw(this.ctx, theme);
             this.ctx.restore();
 
+            // Draw red highlight for hovered component in remove mode
+            if (interactionState.toolMode === 'remove' && interactionState.hoverComponent === c) {
+                const cx = (c.n1.x + c.n2.x) / 2;
+                const cy = (c.n1.y + c.n2.y) / 2;
+                this.ctx.save();
+                this.ctx.strokeStyle = '#f7768e';
+                this.ctx.lineWidth = 3;
+                this.ctx.setLineDash([4, 4]);
+                this.ctx.beginPath();
+                this.ctx.arc(cx, cy, 25, 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+                this.ctx.restore();
+            }
+
             // Draw particles for current (Global visualization overlay)
             if (Math.abs(c.current) > 0.001) {
                 this.drawCurrent(c);
@@ -100,10 +115,18 @@ export class Renderer {
 
             // Hover effects
             if (interactionState.hoverNode === n) {
-                this.ctx.fillStyle = theme.colors.accent;
-                this.ctx.beginPath();
-                this.ctx.arc(n.x, n.y, 6, 0, Math.PI * 2);
-                this.ctx.fill();
+                // Red highlight in remove mode, accent color otherwise
+                if (interactionState.toolMode === 'remove') {
+                    this.ctx.fillStyle = '#f7768e';
+                    this.ctx.beginPath();
+                    this.ctx.arc(n.x, n.y, 8, 0, Math.PI * 2);
+                    this.ctx.fill();
+                } else {
+                    this.ctx.fillStyle = theme.colors.accent;
+                    this.ctx.beginPath();
+                    this.ctx.arc(n.x, n.y, 6, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
 
                 // Voltage Readout
                 if (interactionState.toolMode === 'measure') {

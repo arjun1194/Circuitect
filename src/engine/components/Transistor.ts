@@ -14,6 +14,9 @@ export class Transistor extends AbstractComponent {
         const dist = Math.hypot(this.n2.x - this.n1.x, this.n2.y - this.n1.y);
         const halfDist = dist / 2;
 
+        // Calculate angle for counter-rotation of labels
+        const angle = Math.atan2(this.n2.y - this.n1.y, this.n2.x - this.n1.x);
+
         ctx.save();
         ctx.strokeStyle = theme.colors.wire || '#565f89';
         ctx.lineWidth = 3;
@@ -47,9 +50,30 @@ export class Transistor extends AbstractComponent {
         ctx.fillStyle = '#fff';
         ctx.fill();
 
-        ctx.font = '8px monospace';
-        ctx.fillStyle = '#888';
-        ctx.fillText('B', 5, -2);
+        // Terminal labels - counter-rotate to keep text horizontal
+        ctx.font = 'bold 9px monospace';
+        ctx.fillStyle = '#9ece6a'; // Green for visibility
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Helper function to draw counter-rotated text
+        const drawLabel = (text: string, x: number, y: number) => {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(-angle); // Counter-rotate to keep text horizontal
+            ctx.fillText(text, 0, 0);
+            ctx.restore();
+        };
+
+        // Emitter label (left terminal - n1)
+        drawLabel('E', -halfDist + 12, -10);
+
+        // Collector label (right terminal - n2)
+        drawLabel('C', halfDist - 12, -10);
+
+        // Base label (top terminal - n3)
+        drawLabel('B', 10, -15);
+
         ctx.restore();
     }
 }

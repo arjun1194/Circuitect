@@ -1,0 +1,97 @@
+{
+    "version": 1,
+    "nodes": [
+        {
+            "id": 0,
+            "x": 200,
+            "y": 400
+        },
+        {
+            "id": 1,
+            "x": 400,
+            "y": 400
+        },
+        {
+            "id": 2,
+            "x": 200,
+            "y": 300
+        },
+        {
+            "id": 3,
+            "x": 150,
+            "y": 350
+        },
+        {
+            "id": 4,
+            "x": 150,
+            "y": 500
+        },
+        {
+            "id": 5,
+            "x": 400,
+            "y": 500
+        },
+        {
+            "id": 6,
+            "x": 200,
+            "y": 200
+        },
+        {
+            "id": 7,
+            "x": 400,
+            "y": 200
+        }
+    ],
+    "components": [
+        {
+            "type": "BATTERY",
+            "n1Id": 4,
+            "n2Id": 5,
+            "properties": {
+                "voltage": 9
+            }
+        },
+        {
+            "type": "TRANSISTOR",
+            "n1Id": 0,
+            "n2Id": 2,
+            "n3Id": 3
+        },
+        {
+            "type": "WIRE",
+            "n1Id": 4,
+            "n2Id": 0
+        },
+        {
+            "type": "WIRE",
+            "n1Id": 3,
+            "n2Id": 4
+        },
+        {
+            "type": "RESISTOR",
+            "n1Id": 2,
+            "n2Id": 6,
+            "properties": {
+                "resistance": 220
+            }
+        },
+        {
+            "type": "LED",
+            "n1Id": 6,
+            "n2Id": 7,
+            "properties": {
+                "ledColor": "red"
+            }
+        },
+        {
+            "type": "WIRE",
+            "n1Id": 7,
+            "n2Id": 1
+        },
+        {
+            "type": "WIRE",
+            "n1Id": 1,
+            "n2Id": 5
+        }
+    ]
+}

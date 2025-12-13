@@ -10,6 +10,7 @@ import FloatingControls from './components/UI/FloatingControls';
 import ValidationModal from './components/UI/ValidationModal';
 import LevelHUD from './components/UI/LevelHUD';
 import HintsPanel from './components/UI/HintsPanel';
+import DebugPanel from './components/UI/DebugPanel';
 
 import { AbstractComponent } from './engine/Physics';
 import { GameLoopController } from './hooks/useGameLoop';
@@ -31,6 +32,8 @@ function App() {
   const [gameController, setGameController] = useState<GameLoopController | null>(null);
   const [hintsShown, setHintsShown] = useState<number>(0);
   const [validationResult, setValidationResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
+  const [, forceUpdate] = useState(0); // Used to re-render when undo/redo state changes
 
   const currentLevel = LEVELS[levelIndex];
 
@@ -122,6 +125,18 @@ function App() {
     }
   }, [gameController, levelIndex]);
 
+  const handleUndo = useCallback(() => {
+    if (!gameController) return;
+    gameController.undo();
+    forceUpdate(n => n + 1);
+  }, [gameController]);
+
+  const handleRedo = useCallback(() => {
+    if (!gameController) return;
+    gameController.redo();
+    forceUpdate(n => n + 1);
+  }, [gameController]);
+
   const onMountController = useCallback((ctrl: GameLoopController) => {
     setGameController(ctrl);
   }, []);
@@ -138,6 +153,10 @@ function App() {
         onResetProgress={handleResetProgress}
         onExport={handleExport}
         onImport={handleImport}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={gameController?.canUndo() ?? false}
+        canRedo={gameController?.canRedo() ?? false}
         isLastLevel={levelIndex === LEVELS.length - 1}
         actionLabel="Test Circuit"
       />
@@ -165,7 +184,12 @@ function App() {
           />
 
           {/* Floating Controls */}
-          <FloatingControls currentMode={toolMode} onSetMode={setToolMode} />
+          <FloatingControls
+            currentMode={toolMode}
+            onSetMode={setToolMode}
+            showDebug={showDebug}
+            onToggleDebug={() => setShowDebug(prev => !prev)}
+          />
 
           {/* PROPERTY EDITOR OVERLAY */}
           {editingComponent && (() => {
@@ -177,6 +201,14 @@ function App() {
               />
             );
           })()}
+
+          {/* DEBUG PANEL */}
+          {showDebug && gameController && (
+            <DebugPanel
+              components={gameController.getComponents()}
+              onClose={() => setShowDebug(false)}
+            />
+          )}
 
           {/* VALIDATION MODAL */}
           {validationResult && (

@@ -4,6 +4,7 @@ import { physicsStep, CircuitNode, AbstractComponent } from '../engine/Physics';
 import { GRID_SIZE, TYPES, ComponentType } from '../config/gameConfig';
 import { ComponentFactory } from '../engine/ComponentFactory';
 import { circuitToJson, circuitFromJson } from '../utils/CircuitSerializer';
+import { useUndoRedo } from './useUndoRedo';
 
 
 interface GameState {
@@ -14,6 +15,7 @@ interface GameState {
     currentMouse: { x: number; y: number } | null;
     isDragging: boolean;
     hoverNode: CircuitNode | undefined | null;
+    hoverComponent: AbstractComponent | null;
     lastTime: number;
 }
 
@@ -26,6 +28,10 @@ export interface GameLoopController {
     getNodes: () => CircuitNode[];
     exportCircuit: () => string;
     importCircuit: (json: string) => boolean;
+    undo: () => boolean;
+    redo: () => boolean;
+    canUndo: () => boolean;
+    canRedo: () => boolean;
 }
 
 // TODO: this file is too big, separate into smaller hooks and compose
@@ -45,8 +51,12 @@ export function useGameLoop(
         currentMouse: null,
         isDragging: false,
         hoverNode: null,
+        hoverComponent: null,
         lastTime: 0
     });
+
+    // Undo/Redo controller
+    const undoRedo = useUndoRedo();
 
 
 
@@ -82,6 +92,7 @@ export function useGameLoop(
             // Render Step
             state.renderer.render(state.components, state.nodes, {
                 hoverNode: state.hoverNode,
+                hoverComponent: state.hoverComponent,
                 dragStart: state.dragStart,
                 currentMouse: state.currentMouse,
                 isDragging: state.isDragging,
@@ -154,8 +165,52 @@ export function useGameLoop(
                 state.isDragging = false; // Cancel drag if clicked component
                 state.dragStart = null;
             }
+        } else if (toolMode === 'remove') {
+            const mx = e.clientX - canvasRef.current.getBoundingClientRect().left;
+            const my = e.clientY - canvasRef.current.getBoundingClientRect().top;
+
+            // Check for clicked component first
+            const clickedComp = state.components.find(c => {
+                const midX = (c.n1.x + c.n2.x) / 2;
+                const midY = (c.n1.y + c.n2.y) / 2;
+                return Math.hypot(midX - mx, midY - my) < 20;
+            });
+
+            if (clickedComp) {
+                // Remove component from connections of its nodes
+                clickedComp.n1.connections = clickedComp.n1.connections.filter(c => c !== clickedComp);
+                clickedComp.n2.connections = clickedComp.n2.connections.filter(c => c !== clickedComp);
+                if (clickedComp.n3) {
+                    clickedComp.n3.connections = clickedComp.n3.connections.filter(c => c !== clickedComp);
+                }
+                // Remove component from state
+                state.components = state.components.filter(c => c !== clickedComp);
+                state.hoverComponent = null;
+                // Save state for undo
+                undoRedo.pushState(state.nodes, state.components);
+            } else {
+                // Check for clicked node
+                const clickedNode = state.nodes.find(n => Math.hypot(n.x - mx, n.y - my) < 15);
+                if (clickedNode) {
+                    // Remove all components connected to this node
+                    const connectedComps = [...clickedNode.connections];
+                    connectedComps.forEach(comp => {
+                        comp.n1.connections = comp.n1.connections.filter(c => c !== comp);
+                        comp.n2.connections = comp.n2.connections.filter(c => c !== comp);
+                        if (comp.n3) {
+                            comp.n3.connections = comp.n3.connections.filter(c => c !== comp);
+                        }
+                        state.components = state.components.filter(c => c !== comp);
+                    });
+                    // Remove the node
+                    state.nodes = state.nodes.filter(n => n !== clickedNode);
+                    state.hoverNode = null;
+                    // Save state for undo
+                    undoRedo.pushState(state.nodes, state.components);
+                }
+            }
         }
-    }, [toolMode, onComponentSelect, selectedTool]);
+    }, [toolMode, onComponentSelect, selectedTool, undoRedo]);
 
     const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!canvasRef.current) return;
@@ -168,6 +223,13 @@ export function useGameLoop(
         const my = e.clientY - rect.top;
 
         state.hoverNode = state.nodes.find(n => Math.hypot(n.x - mx, n.y - my) < 15);
+
+        // Track hovered component for remove mode
+        state.hoverComponent = state.components.find(c => {
+            const midX = (c.n1.x + c.n2.x) / 2;
+            const midY = (c.n1.y + c.n2.y) / 2;
+            return Math.hypot(midX - mx, midY - my) < 20;
+        }) || null;
     }, []);
 
     const handleMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -200,6 +262,9 @@ export function useGameLoop(
                 state.components.push(newComp);
                 n1.connections.push(newComp);
                 n2.connections.push(newComp);
+
+                // Save state for undo
+                undoRedo.pushState(state.nodes, state.components);
             }
         }
         state.isDragging = false;
@@ -207,10 +272,32 @@ export function useGameLoop(
     }, [toolMode, selectedTool]);
 
     // External Controls (Clear, Load Level)
-    const clear = () => {
+    const clear = useCallback(() => {
         stateRef.current.nodes = [];
         stateRef.current.components = [];
-    };
+        undoRedo.clearHistory();
+    }, [undoRedo]);
+
+    // Undo/Redo handlers
+    const undo = useCallback((): boolean => {
+        const result = undoRedo.undo();
+        if (result) {
+            stateRef.current.nodes = result.nodes;
+            stateRef.current.components = result.components;
+            return true;
+        }
+        return false;
+    }, [undoRedo]);
+
+    const redo = useCallback((): boolean => {
+        const result = undoRedo.redo();
+        if (result) {
+            stateRef.current.nodes = result.nodes;
+            stateRef.current.components = result.components;
+            return true;
+        }
+        return false;
+    }, [undoRedo]);
 
     const getComponents = () => stateRef.current.components;
     const getNodes = () => stateRef.current.nodes;
@@ -240,6 +327,10 @@ export function useGameLoop(
         getComponents,
         getNodes,
         exportCircuit,
-        importCircuit
-    }), [handleMouseDown, handleMouseMove, handleMouseUp, exportCircuit, importCircuit]);
+        importCircuit,
+        undo,
+        redo,
+        canUndo: undoRedo.canUndo,
+        canRedo: undoRedo.canRedo
+    }), [handleMouseDown, handleMouseMove, handleMouseUp, clear, exportCircuit, importCircuit, undo, redo, undoRedo]);
 }

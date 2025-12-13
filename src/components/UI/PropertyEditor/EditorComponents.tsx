@@ -45,3 +45,31 @@ export function EditorSelect({ label, value, options, onChange }: EditorSelectPr
         </div>
     );
 }
+
+interface EditorSliderProps {
+    label: string;
+    value: number;
+    min: number;
+    max: number;
+    step?: number;
+    onChange: (value: number) => void;
+}
+
+export function EditorSlider({ label, value, min, max, step = 1, onChange }: EditorSliderProps) {
+    return (
+        <div className="mb-4">
+            <label className="block text-gray-400 text-xs mb-1">
+                {label}: <span className="text-[#7aa2f7]">{value}</span>
+            </label>
+            <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onChange={(e) => onChange(parseFloat(e.target.value))}
+                className="w-full accent-[#7aa2f7]"
+            />
+        </div>
+    );
+}

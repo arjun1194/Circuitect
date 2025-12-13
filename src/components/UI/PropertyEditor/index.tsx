@@ -57,6 +57,8 @@ export default function PropertyEditor({ component, onClose }: PropertyEditorPro
             {component.type === TYPES.LED && (
                 <LEDEditor
                     ledColor={(component as any).ledColor || 'red'}
+                    maxVoltage={(component as any).maxVoltage || 3}
+                    burnt={(component as any).burnt || false}
                     onChange={handleChange}
                 />
             )}

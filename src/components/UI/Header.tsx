@@ -1,4 +1,5 @@
 import ExportImportButtons from './ExportImportButtons';
+import UndoRedoButtons from './UndoRedoButtons';
 
 interface HeaderProps {
     levelTitle: string;
@@ -10,6 +11,10 @@ interface HeaderProps {
     onResetProgress: () => void;
     onExport: () => void;
     onImport: (json: string) => void;
+    onUndo: () => void;
+    onRedo: () => void;
+    canUndo: boolean;
+    canRedo: boolean;
     isLastLevel: boolean;
     actionLabel?: string;
 }
@@ -24,6 +29,10 @@ export default function Header({
     onResetProgress,
     onExport,
     onImport,
+    onUndo,
+    onRedo,
+    canUndo,
+    canRedo,
     isLastLevel,
     actionLabel
 }: HeaderProps) {
@@ -40,6 +49,13 @@ export default function Header({
             </div>
 
             <div className="flex items-center gap-3">
+                <UndoRedoButtons
+                    onUndo={onUndo}
+                    onRedo={onRedo}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                />
+                <div className="h-6 w-px bg-[#414868]"></div>
                 <ExportImportButtons onExport={onExport} onImport={onImport} />
                 <div className="h-6 w-px bg-[#414868]"></div>
                 <button

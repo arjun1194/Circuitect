@@ -7,5 +7,6 @@
  */
 export enum ToolMode {
     BUILD = 'build',
-    MEASURE = 'measure'
+    MEASURE = 'measure',
+    REMOVE = 'remove'
 }

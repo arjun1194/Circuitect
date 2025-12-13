@@ -23,6 +23,9 @@ export class Battery extends AbstractComponent {
         const dist = Math.hypot(this.n2.x - this.n1.x, this.n2.y - this.n1.y);
         const halfDist = dist / 2;
 
+        // Calculate angle for counter-rotation of labels
+        const angle = Math.atan2(this.n2.y - this.n1.y, this.n2.x - this.n1.x);
+
         ctx.save();
 
         // Draw Leads
@@ -60,13 +63,32 @@ export class Battery extends AbstractComponent {
         ctx.arc(0, -20, 5, 0, Math.PI * 2);
         ctx.fill();
 
-        // Text
+        // Voltage text (stays with component rotation)
         ctx.font = "bold 10px Arial";
         ctx.fillStyle = "#fff";
         ctx.textAlign = "center";
         ctx.fillText(voltage + "V", 0, 10);
-        ctx.fillStyle = theme.colors.warning || "#e0af68";
-        ctx.fillText("+", 0, -10);
+
+        // Terminal labels - counter-rotate to keep text horizontal
+        ctx.font = 'bold 12px monospace';
+        ctx.textBaseline = 'middle';
+
+        // Helper function to draw counter-rotated text
+        const drawLabel = (text: string, x: number, y: number, color: string) => {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(-angle); // Counter-rotate to keep text horizontal
+            ctx.fillStyle = color;
+            ctx.fillText(text, 0, 0);
+            ctx.restore();
+        };
+
+        // Positive terminal label (n1 side - left)
+        drawLabel('+', -halfDist + 12, -10, theme.colors.warning || '#e0af68');
+
+        // Negative terminal label (n2 side - right)
+        drawLabel('−', halfDist - 12, -10, '#aaa');
+
         ctx.restore();
     }
 }
