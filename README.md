@@ -2,6 +2,9 @@
 
 Circuitect is an interactive digital logic and circuit design game built with React and Vite. It allows users to build, test, and simulate electronic circuits using a variety of components.
 
+<img width="1440" height="751" alt="image" src="https://github.com/user-attachments/assets/fdc86e37-7824-4f98-8747-cfd127620716" />
+
+
 ## Features
 
 -   **Interactive Circuit Building:** Drag and drop components like Batteries, Resistors, LEDs, Switches, Transistors (NPN), and Logic Chips (AND, OR, NOT).
