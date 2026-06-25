@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Level } from '../../config/levels';
-import { X, ChevronDown } from 'lucide-react';
+import { Lightbulb, Minus, Plus } from 'lucide-react';
+import { IconButton } from './primitives';
 
 interface LevelHUDProps {
     level: Level;
@@ -11,53 +12,53 @@ interface LevelHUDProps {
 }
 
 export default function LevelHUD({ level, levelIndex, hintsShown, onShowHint, children }: LevelHUDProps) {
-    const [isMinimized, setIsMinimized] = useState(false);
+    const [collapsed, setCollapsed] = useState(false);
 
-    if (isMinimized) {
+    if (collapsed) {
         return (
-            <div className="absolute top-5 left-5 pointer-events-none z-10">
+            <div className="pointer-events-none absolute left-3 top-3 z-10 sm:left-4 sm:top-4">
                 <button
-                    onClick={() => setIsMinimized(false)}
-                    className="bg-[#24283b]/95 border border-[#7aa2f7] px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm pointer-events-auto hover:bg-[#3b4261] transition-all flex items-center gap-2"
+                    onClick={() => setCollapsed(false)}
+                    className="pointer-events-auto flex items-center gap-2 rounded-xl border border-border bg-surface/90 px-3 py-2 shadow-lg backdrop-blur-sm transition-colors hover:bg-surface-2"
                 >
-                    <ChevronDown size={16} className="text-[#7aa2f7]" />
-                    <span className="text-sm font-bold text-[#7aa2f7]">{level.title}</span>
+                    <Plus size={15} className="text-accent" />
+                    <span className="text-sm font-medium text-text">{level.title}</span>
                 </button>
             </div>
         );
     }
 
     return (
-        <div className="absolute top-5 left-5 pointer-events-none z-10 max-w-md">
-            <div className="bg-[#24283b]/95 border border-[#7aa2f7] p-5 rounded-xl shadow-2xl backdrop-blur-sm pointer-events-auto">
-                <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-bold text-[#7aa2f7]">{level.title}</h2>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-[#565f89]">#{levelIndex + 1}</span>
-                        <button
-                            onClick={() => setIsMinimized(true)}
-                            className="text-[#565f89] hover:text-[#f7768e] transition-colors"
-                            title="Minimize"
-                        >
-                            <X size={16} />
-                        </button>
+        <div className="pointer-events-none absolute left-3 top-3 z-10 w-[min(20rem,calc(100vw-1.5rem))] sm:left-4 sm:top-4">
+            <div className="pointer-events-auto rounded-2xl border border-border bg-surface/90 p-4 shadow-2xl backdrop-blur-md">
+                <div className="mb-2 flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                        <div className="text-[10px] font-medium uppercase tracking-wider text-faint">
+                            Level {levelIndex + 1}
+                        </div>
+                        <h2 className="text-base font-medium text-text">{level.title}</h2>
                     </div>
-                </div>
-                <p className="text-sm text-[#a9b1d6] mb-3">{level.desc}</p>
-                <div className="bg-[#1a1b26] p-3 rounded border-l-2 border-[#7dcfff]">
-                    <p className="text-xs text-[#9aa5ce] italic">{level.theory}</p>
+                    <IconButton label="Collapse objective" size="sm" onClick={() => setCollapsed(true)}>
+                        <Minus size={16} />
+                    </IconButton>
                 </div>
 
-                {/* Hints Section */}
+                <p className="mb-3 text-sm leading-relaxed text-muted">{level.desc}</p>
+
+                <div className="rounded-lg border-l-2 border-cyan bg-bg/60 p-3">
+                    <p className="text-xs italic leading-relaxed text-faint">{level.theory}</p>
+                </div>
+
+                {/* Hints (HintsPanel) */}
                 {children}
 
-                {/* Show Hint Button */}
                 {hintsShown < level.hints.length && (
                     <button
                         onClick={onShowHint}
-                        className="mt-3 text-xs text-[#7aa2f7] hover:text-[#7dcfff] underline"
+                        className="mt-3 flex items-center gap-1.5 text-xs font-medium text-warning transition-colors hover:brightness-110"
                     >
-                        💡 Show Hint ({hintsShown}/{level.hints.length})
+                        <Lightbulb size={14} />
+                        Show hint ({hintsShown}/{level.hints.length})
                     </button>
                 )}
             </div>

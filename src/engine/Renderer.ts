@@ -1,48 +1,62 @@
 /**
- * Circuit Architect - Renderer
- * Handles canvas drawing operations
+ * Circuitect - Renderer
+ * Handles canvas drawing operations.
+ *
+ * Colors come from the live design tokens via getCanvasTheme(), so the canvas
+ * recolors when the user toggles the theme. The backing store is scaled by
+ * devicePixelRatio for crisp rendering on HiDPI/Retina displays; all draw code
+ * works in CSS pixels.
  */
 
 import { CircuitNode, AbstractComponent } from './Physics';
-import { theme } from '../config/theme';
+import { CanvasTheme, getCanvasTheme } from './canvasTheme';
 import { TYPES } from '../config/gameConfig';
 
 export class Renderer {
     ctx: CanvasRenderingContext2D;
     width: number;
     height: number;
+    dpr: number;
 
     constructor(ctx: CanvasRenderingContext2D) {
         this.ctx = ctx;
         this.width = 0;
         this.height = 0;
+        this.dpr = 1;
     }
 
-    setSize(w: number, h: number) {
+    /**
+     * Size the canvas. `w`/`h` are CSS pixels; the backing store is scaled by
+     * `dpr` and the context is transformed so all draw code stays in CSS px.
+     */
+    setSize(w: number, h: number, dpr: number = 1) {
         this.width = w;
         this.height = h;
-        this.ctx.canvas.width = w;
-        this.ctx.canvas.height = h;
+        this.dpr = dpr;
+        const canvas = this.ctx.canvas;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        if (canvas.style) {
+            canvas.style.width = `${w}px`;
+            canvas.style.height = `${h}px`;
+        }
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     clear() {
+        // In logical (CSS-pixel) space thanks to the setTransform in setSize.
         this.ctx.clearRect(0, 0, this.width, this.height);
     }
 
-    drawCurrent(c: AbstractComponent) {
-        if (!c.particles) {
-            c.particles = [];
-            for (let i = 0; i < 3; i++) c.particles.push(Math.random());
-        }
-
+    drawCurrent(c: AbstractComponent, theme: CanvasTheme) {
         const speed = c.current * 0.5; // Factor
-        this.ctx.fillStyle = theme.colors.current; // '#e0af68';
+        this.ctx.fillStyle = theme.colors.current;
 
         c.particles.forEach((p, i) => {
-            c.particles![i] = (p + speed) % 1;
-            if (c.particles![i] < 0) c.particles![i] += 1;
+            c.particles[i] = (p + speed) % 1;
+            if (c.particles[i] < 0) c.particles[i] += 1;
 
-            const t = c.particles![i];
+            const t = c.particles[i];
             const x = c.n1.x + (c.n2.x - c.n1.x) * t;
             const y = c.n1.y + (c.n2.y - c.n1.y) * t;
 
@@ -53,6 +67,7 @@ export class Renderer {
     }
 
     render(components: AbstractComponent[], nodes: CircuitNode[], interactionState: any) {
+        const theme = getCanvasTheme();
         this.clear();
 
         // 1. Components
@@ -73,12 +88,12 @@ export class Renderer {
             c.draw(this.ctx, theme);
             this.ctx.restore();
 
-            // Draw red highlight for hovered component in remove mode
+            // Draw highlight for hovered component in remove mode
             if (interactionState.toolMode === 'remove' && interactionState.hoverComponent === c) {
                 const cx = (c.n1.x + c.n2.x) / 2;
                 const cy = (c.n1.y + c.n2.y) / 2;
                 this.ctx.save();
-                this.ctx.strokeStyle = '#f7768e';
+                this.ctx.strokeStyle = theme.colors.danger;
                 this.ctx.lineWidth = 3;
                 this.ctx.setLineDash([4, 4]);
                 this.ctx.beginPath();
@@ -90,7 +105,7 @@ export class Renderer {
 
             // Draw particles for current (Global visualization overlay)
             if (Math.abs(c.current) > 0.001) {
-                this.drawCurrent(c);
+                this.drawCurrent(c, theme);
             }
         });
 
@@ -115,9 +130,9 @@ export class Renderer {
 
             // Hover effects
             if (interactionState.hoverNode === n) {
-                // Red highlight in remove mode, accent color otherwise
+                // Danger highlight in remove mode, accent color otherwise
                 if (interactionState.toolMode === 'remove') {
-                    this.ctx.fillStyle = '#f7768e';
+                    this.ctx.fillStyle = theme.colors.danger;
                     this.ctx.beginPath();
                     this.ctx.arc(n.x, n.y, 8, 0, Math.PI * 2);
                     this.ctx.fill();
@@ -130,7 +145,7 @@ export class Renderer {
 
                 // Voltage Readout
                 if (interactionState.toolMode === 'measure') {
-                    this.ctx.fillStyle = '#e0af68';
+                    this.ctx.fillStyle = theme.colors.warning;
                     this.ctx.font = "bold 12px monospace";
                     this.ctx.fillText(`${n.voltage.toFixed(2)}V`, n.x + 10, n.y - 10);
                 }

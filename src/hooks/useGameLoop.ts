@@ -4,7 +4,9 @@ import { physicsStep, CircuitNode, AbstractComponent } from '../engine/Physics';
 import { GRID_SIZE, TYPES, ComponentType } from '../config/gameConfig';
 import { ComponentFactory } from '../engine/ComponentFactory';
 import { circuitToJson, circuitFromJson } from '../utils/CircuitSerializer';
+import { refreshCanvasTheme } from '../engine/canvasTheme';
 import { useUndoRedo } from './useUndoRedo';
+import { THEME_CHANGE_EVENT } from './useTheme';
 
 
 interface GameState {
@@ -66,16 +68,26 @@ export function useGameLoop(
         const canvas = canvasRef.current;
         stateRef.current.renderer = new Renderer(canvas.getContext('2d')!); // Non-null assertion for 2d context
 
-        // Handle Resize
+        // Handle Resize (devicePixelRatio-aware for crisp HiDPI rendering)
         const handleResize = () => {
             const parent = canvas.parentElement;
             if (parent && stateRef.current.renderer) {
-                stateRef.current.renderer.setSize(parent.clientWidth, parent.clientHeight);
+                const dpr = window.devicePixelRatio || 1;
+                stateRef.current.renderer.setSize(parent.clientWidth, parent.clientHeight, dpr);
             }
         };
+
+        // Resolve canvas colors now and re-resolve whenever the theme changes.
+        refreshCanvasTheme();
+        const handleThemeChange = () => refreshCanvasTheme();
+
         handleResize();
         window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+        };
     }, []);
 
     // Game Loop

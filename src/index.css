@@ -1,1 +1,139 @@
 @import "tailwindcss";
+
+/*
+ * Circuitect design tokens — single source of truth for both the DOM (Tailwind
+ * utilities below) and the canvas renderer (which reads these CSS variables at
+ * runtime). Switch themes by setting `data-theme` on <html>; see useTheme.ts.
+ */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --c-bg: #16161e;
+  --c-surface: #1b1e29;
+  --c-surface-2: #242a3e;
+  --c-canvas: #13131a;
+  --c-border: #2a2f45;
+  --c-border-strong: #3a4163;
+  --c-text: #c8d0f0;
+  --c-muted: #8893b8;
+  --c-faint: #5b6488;
+  --c-accent: #7aa2f7;
+  --c-accent-contrast: #0d1020;
+  --c-cyan: #7dcfff;
+  --c-success: #9ece6a;
+  --c-warning: #e0af68;
+  --c-danger: #f7768e;
+  --c-purple: #bb9af7;
+  --c-grid: #2c3257;
+  --c-wire: #7f8bb0;
+  --c-node: #5a6488;
+  --c-current: #e0af68;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --c-bg: #eef1f8;
+  --c-surface: #ffffff;
+  --c-surface-2: #f3f5fc;
+  --c-canvas: #f6f8fd;
+  --c-border: #e2e6f1;
+  --c-border-strong: #cfd6e6;
+  --c-text: #1d2333;
+  --c-muted: #55607a;
+  --c-faint: #8a93ab;
+  --c-accent: #3a6ff7;
+  --c-accent-contrast: #ffffff;
+  --c-cyan: #0c7d9e;
+  --c-success: #2f9e44;
+  --c-warning: #b9770f;
+  --c-danger: #d83472;
+  --c-purple: #6b40e0;
+  --c-grid: #cfd6ea;
+  --c-wire: #6b7592;
+  --c-node: #8893b8;
+  --c-current: #c47d12;
+}
+
+/* Map tokens into Tailwind so utilities like bg-surface / text-muted /
+ * border-border resolve to the live variables (and thus react to data-theme). */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-canvas: var(--c-canvas);
+  --color-border: var(--c-border);
+  --color-border-strong: var(--c-border-strong);
+  --color-text: var(--c-text);
+  --color-muted: var(--c-muted);
+  --color-faint: var(--c-faint);
+  --color-accent: var(--c-accent);
+  --color-accent-contrast: var(--c-accent-contrast);
+  --color-cyan: var(--c-cyan);
+  --color-success: var(--c-success);
+  --color-warning: var(--c-warning);
+  --color-danger: var(--c-danger);
+  --color-purple: var(--c-purple);
+  --color-grid: var(--c-grid);
+  --color-wire: var(--c-wire);
+  --color-node: var(--c-node);
+  --color-current: var(--c-current);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", "Courier New", monospace;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--c-bg);
+    color: var(--c-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+}
+
+@layer utilities {
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Themed thin scrollbars for panels */
+  .cx-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-border-strong) transparent;
+  }
+  .cx-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .cx-scroll::-webkit-scrollbar-thumb {
+    background: var(--c-border-strong);
+    border-radius: 4px;
+  }
+  .cx-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}

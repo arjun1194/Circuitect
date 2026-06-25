@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { Wrench, Zap, Trash2, Bug } from 'lucide-react';
+import { Wrench, Zap, Eraser, Bug } from 'lucide-react';
 import { ToolMode } from '../../types';
 
 interface FloatingControlsProps {
@@ -9,61 +9,60 @@ interface FloatingControlsProps {
     onToggleDebug?: () => void;
 }
 
-export default function FloatingControls({ currentMode, onSetMode, showDebug, onToggleDebug }: FloatingControlsProps) {
+type ModeDef = { mode: ToolMode; label: string; icon: typeof Wrench; activeClass: string };
+
+const MODES: ModeDef[] = [
+    { mode: ToolMode.BUILD, label: 'Build', icon: Wrench, activeClass: 'bg-accent/15 text-accent' },
+    { mode: ToolMode.MEASURE, label: 'Measure', icon: Zap, activeClass: 'bg-warning/15 text-warning' },
+    { mode: ToolMode.REMOVE, label: 'Erase', icon: Eraser, activeClass: 'bg-danger/15 text-danger' },
+];
+
+export default function FloatingControls({
+    currentMode,
+    onSetMode,
+    showDebug,
+    onToggleDebug,
+}: FloatingControlsProps) {
     return (
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-[#24283b] p-1.5 rounded-full border border-[#414868] shadow-2xl flex gap-1 z-50">
-            <button
-                onClick={() => onSetMode(ToolMode.BUILD)}
-                className={clsx(
-                    "flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all",
-                    currentMode === ToolMode.BUILD
-                        ? "bg-[#7aa2f7] text-[#1a1c23] shadow-lg scale-105"
-                        : "text-[#9aa5ce] hover:bg-[#2f3549] hover:text-white"
-                )}
-            >
-                <Wrench size={18} />
-                Build
-            </button>
-            <div className="w-px bg-[#414868] my-2"></div>
-            <button
-                onClick={() => onSetMode(ToolMode.MEASURE)}
-                className={clsx(
-                    "flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all",
-                    currentMode === ToolMode.MEASURE
-                        ? "bg-[#e0af68] text-[#1a1c23] shadow-lg scale-105"
-                        : "text-[#9aa5ce] hover:bg-[#2f3549] hover:text-white"
-                )}
-            >
-                <Zap size={18} />
-                Measure
-            </button>
-            <div className="w-px bg-[#414868] my-2"></div>
-            <button
-                onClick={() => onSetMode(ToolMode.REMOVE)}
-                className={clsx(
-                    "flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all",
-                    currentMode === ToolMode.REMOVE
-                        ? "bg-[#f7768e] text-[#1a1c23] shadow-lg scale-105"
-                        : "text-[#9aa5ce] hover:bg-[#2f3549] hover:text-white"
-                )}
-            >
-                <Trash2 size={18} />
-                Remove
-            </button>
+        <div
+            role="toolbar"
+            aria-label="Canvas tools"
+            className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border bg-surface/95 p-1.5 shadow-2xl backdrop-blur-md"
+        >
+            {MODES.map(({ mode, label, icon: Icon, activeClass }) => {
+                const active = currentMode === mode;
+                return (
+                    <button
+                        key={mode}
+                        onClick={() => onSetMode(mode)}
+                        aria-pressed={active}
+                        className={clsx(
+                            'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors sm:px-5',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                            active ? activeClass : 'text-muted hover:bg-surface-2 hover:text-text'
+                        )}
+                    >
+                        <Icon size={17} />
+                        <span className="hidden sm:inline">{label}</span>
+                    </button>
+                );
+            })}
+
             {onToggleDebug && (
                 <>
-                    <div className="w-px bg-[#414868] my-2"></div>
+                    <div className="mx-0.5 h-5 w-px bg-border" />
                     <button
                         onClick={onToggleDebug}
+                        aria-pressed={showDebug}
+                        aria-label="Circuit debugger"
+                        title="Circuit debugger"
                         className={clsx(
-                            "flex items-center gap-2 px-4 py-3 rounded-full font-bold transition-all",
-                            showDebug
-                                ? "bg-[#bb9af7] text-[#1a1c23] shadow-lg scale-105"
-                                : "text-[#9aa5ce] hover:bg-[#2f3549] hover:text-white"
+                            'flex items-center rounded-full px-3 py-2 transition-colors',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                            showDebug ? 'bg-purple/15 text-purple' : 'text-muted hover:bg-surface-2 hover:text-text'
                         )}
-                        title="Circuit Debugger"
                     >
-                        <Bug size={18} />
+                        <Bug size={17} />
                     </button>
                 </>
             )}

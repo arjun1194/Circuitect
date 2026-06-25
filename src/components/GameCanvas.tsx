@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'react';
 import { useGameLoop, GameLoopController } from '../hooks/useGameLoop';
-import { theme } from '../config/theme';
 import { GRID_SIZE, ComponentType } from '../config/gameConfig';
 import { AbstractComponent } from '../engine/Physics';
 
@@ -23,12 +22,12 @@ export default function GameCanvas({ toolMode, selectedTool, onComponentSelect, 
     }, [controller, onMountController]);
 
     return (
-        <div className="absolute inset-0 bg-[#16161e] cursor-crosshair overflow-hidden">
-            {/* Grid Pattern using CSS */}
+        <div className="absolute inset-0 bg-canvas cursor-crosshair overflow-hidden">
+            {/* Grid Pattern using CSS — color follows the active theme token */}
             <div
-                className="absolute inset-0 pointer-events-none opacity-20"
+                className="absolute inset-0 pointer-events-none"
                 style={{
-                    backgroundImage: `radial-gradient(${theme.colors.grid} 1.5px, transparent 1.5px)`,
+                    backgroundImage: `radial-gradient(var(--c-grid) 1.5px, transparent 1.5px)`,
                     backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`
                 }}
             />
@@ -40,6 +39,7 @@ export default function GameCanvas({ toolMode, selectedTool, onComponentSelect, 
                 onMouseUp={controller.handleMouseUp}
                 onMouseLeave={controller.handleMouseUp}
                 className="block w-full h-full"
+                style={{ touchAction: 'none' }}
             />
             {/* HUD / Overlay items can go here */}
         </div>

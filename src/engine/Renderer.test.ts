@@ -16,7 +16,7 @@ describe('Renderer', () => {
     beforeEach(() => {
         // Mock CanvasRenderingContext2D
         ctx = {
-            canvas: { width: 0, height: 0 },
+            canvas: { width: 0, height: 0, style: {} as Record<string, string> },
             clearRect: vi.fn(),
             save: vi.fn(),
             restore: vi.fn(),
@@ -32,8 +32,34 @@ describe('Renderer', () => {
             strokeStyle: '',
             lineWidth: 0,
             setLineDash: vi.fn(),
+            setTransform: vi.fn(),
         };
         renderer = new Renderer(ctx as unknown as CanvasRenderingContext2D);
+    });
+
+    describe('setSize (HiDPI / devicePixelRatio)', () => {
+        it('should scale the backing store by dpr while keeping logical size', () => {
+            renderer.setSize(800, 600, 2);
+
+            // Backing store is scaled up for crisp rendering...
+            expect(ctx.canvas.width).toBe(1600);
+            expect(ctx.canvas.height).toBe(1200);
+            // ...while CSS size and the renderer's logical size stay in CSS px.
+            expect(ctx.canvas.style.width).toBe('800px');
+            expect(ctx.canvas.style.height).toBe('600px');
+            expect(renderer.width).toBe(800);
+            expect(renderer.height).toBe(600);
+            // Context is transformed so draw code keeps using CSS-pixel coords.
+            expect(ctx.setTransform).toHaveBeenCalledWith(2, 0, 0, 2, 0, 0);
+        });
+
+        it('should default dpr to 1 (backing store == logical size)', () => {
+            renderer.setSize(400, 300);
+
+            expect(ctx.canvas.width).toBe(400);
+            expect(ctx.canvas.height).toBe(300);
+            expect(ctx.setTransform).toHaveBeenCalledWith(1, 0, 0, 1, 0, 0);
+        });
     });
 
     it('should apply coordinate transformations for non-wire components', () => {

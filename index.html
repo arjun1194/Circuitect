@@ -1,11 +1,28 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Circuit Architect</title>
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#16161e" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#eef1f8" />
+    <meta name="description" content="Circuitect — an interactive circuit design and simulation game." />
+    <title>Circuitect — Circuit Builder</title>
+    <script>
+        // Set the theme before first paint to avoid a flash of the wrong theme.
+        (function () {
+            try {
+                var saved = localStorage.getItem('circuitect-theme');
+                var mode = (saved === 'dark' || saved === 'light')
+                    ? saved
+                    : (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+                document.documentElement.setAttribute('data-theme', mode);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
 </head>
 
 <body>

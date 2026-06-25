@@ -1,118 +1,70 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ComponentType } from '../../config/gameConfig';
 import { COMPONENT_METADATA } from '../../config/ComponentMetadata';
 import clsx from 'clsx';
-import { ToolMode } from '../../types';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ToolboxProps {
     selectedTool: ComponentType;
     onSelectTool: (t: ComponentType) => void;
-    currentMode: ToolMode;
-    onSetMode: (m: ToolMode) => void;
+    /** Called after a tool is picked — used to close the mobile drawer. */
+    onPick?: () => void;
 }
 
-export default function Toolbox({ selectedTool, onSelectTool }: ToolboxProps) {
-    const [isMinimized, setIsMinimized] = useState(false);
+const CATEGORY_ORDER = ['Basic', 'Passive', 'Power', 'Output', 'Control', 'Active', 'Abstraction'];
 
-    // Memoize categories to prevent recalculation on every render
+export default function Toolbox({ selectedTool, onSelectTool, onPick }: ToolboxProps) {
     const categoryEntries = useMemo(() => {
-        const categories: Record<string, string[]> = {
-            'Basic': [],
-            'Passive': [],
-            'Active': [],
-            'Power': [],
-            'Control': [],
-            'Output': [],
-            'Abstraction': []
-        };
+        const categories: Record<string, ComponentType[]> = {};
+        for (const cat of CATEGORY_ORDER) categories[cat] = [];
 
-        Object.keys(COMPONENT_METADATA).forEach(key => {
-            const type = key as ComponentType;
+        (Object.keys(COMPONENT_METADATA) as ComponentType[]).forEach((type) => {
             const def = COMPONENT_METADATA[type];
-            if (categories[def.category]) {
-                categories[def.category].push(type);
-            }
+            if (categories[def.category]) categories[def.category].push(type);
         });
 
         return Object.entries(categories).filter(([, types]) => types.length > 0);
     }, []);
 
-    // Minimized state - show only expand button
-    if (isMinimized) {
-        return (
-            <div className="bg-[#24283b] flex flex-col items-center py-4 border-l border-[#333] shadow-lg">
-                <button
-                    onClick={() => setIsMinimized(false)}
-                    className="p-2 text-[#7aa2f7] hover:bg-[#3b4261] rounded transition-colors"
-                    title="Expand Toolbox"
-                >
-                    <ChevronLeft size={20} />
-                </button>
-                <div className="mt-4 flex flex-col gap-2">
-                    {/* Show selected tool indicator */}
-                    <div
-                        className="w-8 h-8 rounded flex items-center justify-center font-bold text-xs border-2 border-[#7aa2f7]"
-                        style={{ background: COMPONENT_METADATA[selectedTool]?.color }}
-                        title={COMPONENT_METADATA[selectedTool]?.name}
-                    >
-                        {COMPONENT_METADATA[selectedTool]?.name[0]}
+    return (
+        <div className="p-3">
+            {categoryEntries.map(([cat, types]) => (
+                <div key={cat} className="mb-4 last:mb-0">
+                    <h3 className="mb-1.5 px-1 text-[10px] font-medium uppercase tracking-wider text-faint">
+                        {cat}
+                    </h3>
+                    <div className="space-y-1">
+                        {types.map((type) => {
+                            const def = COMPONENT_METADATA[type];
+                            const selected = selectedTool === type;
+                            return (
+                                <button
+                                    key={type}
+                                    onClick={() => {
+                                        onSelectTool(type);
+                                        onPick?.();
+                                    }}
+                                    aria-pressed={selected}
+                                    title={def.description}
+                                    className={clsx(
+                                        'flex w-full items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left text-sm transition-colors',
+                                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
+                                        selected
+                                            ? 'border-accent bg-accent/10 text-text'
+                                            : 'border-transparent text-muted hover:bg-surface-2 hover:text-text'
+                                    )}
+                                >
+                                    <span
+                                        className="h-4 w-4 shrink-0 rounded"
+                                        style={{ background: def.color }}
+                                        aria-hidden="true"
+                                    />
+                                    <span className="truncate">{def.name}</span>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="w-60 bg-[#24283b] flex flex-col p-4 border-l border-[#333] shadow-lg overflow-y-auto">
-            {/* Header with minimize button */}
-            <div className="flex items-center justify-between mb-2">
-                <span className="text-xs uppercase tracking-wider text-[#7aa2f7] font-bold">Toolbox</span>
-                <button
-                    onClick={() => setIsMinimized(true)}
-                    className="p-1 text-[#565f89] hover:text-[#f7768e] transition-colors"
-                    title="Minimize"
-                >
-                    <ChevronRight size={16} />
-                </button>
-            </div>
-
-            {/* Components List */}
-            <div className="flex-1 overflow-y-auto mt-2">
-                {categoryEntries.map(([cat, types]) => {
-                    return (
-                        <div key={cat} className="mb-4">
-                            <h3 className="text-[11px] uppercase tracking-wider text-[#565f89] font-bold mb-2">{cat}</h3>
-                            <div className="space-y-1">
-                                {types.map(t => {
-                                    const type = t as ComponentType;
-                                    const def = COMPONENT_METADATA[type];
-                                    return (
-                                        <button
-                                            key={type}
-                                            onClick={() => onSelectTool(type)}
-                                            className={clsx(
-                                                "w-full flex items-center p-2 rounded text-sm transition-all text-left",
-                                                selectedTool === type
-                                                    ? "bg-[#3b4261] border border-[#7aa2f7] shadow-[0_0_8px_rgba(122,162,247,0.4)] text-white translate-x-1"
-                                                    : "bg-[#2f3549] border border-[#414868] text-white hover:bg-[#414868] hover:translate-x-1"
-                                            )}
-                                        >
-                                            <div
-                                                className="w-5 h-5 mr-3 rounded flex items-center justify-center font-bold text-xs"
-                                                style={{ background: def.color }}
-                                            >
-                                                {def.name[0]}
-                                            </div>
-                                            {def.name}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+            ))}
         </div>
     );
 }

@@ -1,4 +1,5 @@
 import { Undo2, Redo2 } from 'lucide-react';
+import { IconButton } from './primitives';
 
 interface UndoRedoButtonsProps {
     onUndo: () => void;
@@ -7,36 +8,15 @@ interface UndoRedoButtonsProps {
     canRedo: boolean;
 }
 
-export default function UndoRedoButtons({
-    onUndo,
-    onRedo,
-    canUndo,
-    canRedo
-}: UndoRedoButtonsProps) {
+export default function UndoRedoButtons({ onUndo, onRedo, canUndo, canRedo }: UndoRedoButtonsProps) {
     return (
-        <div className="flex items-center gap-1">
-            <button
-                onClick={onUndo}
-                disabled={!canUndo}
-                className={`p-2 rounded transition-colors ${canUndo
-                        ? 'text-[#7aa2f7] hover:bg-[#2f3549] active:scale-95'
-                        : 'text-[#414868] cursor-not-allowed'
-                    }`}
-                title="Undo (Ctrl+Z)"
-            >
+        <div className="flex items-center gap-0.5">
+            <IconButton label="Undo (Ctrl+Z)" onClick={onUndo} disabled={!canUndo}>
                 <Undo2 size={18} />
-            </button>
-            <button
-                onClick={onRedo}
-                disabled={!canRedo}
-                className={`p-2 rounded transition-colors ${canRedo
-                        ? 'text-[#7aa2f7] hover:bg-[#2f3549] active:scale-95'
-                        : 'text-[#414868] cursor-not-allowed'
-                    }`}
-                title="Redo (Ctrl+Shift+Z)"
-            >
+            </IconButton>
+            <IconButton label="Redo (Ctrl+Shift+Z)" onClick={onRedo} disabled={!canRedo}>
                 <Redo2 size={18} />
-            </button>
+            </IconButton>
         </div>
     );
 }
