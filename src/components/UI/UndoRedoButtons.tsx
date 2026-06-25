@@ -11,10 +11,10 @@ interface UndoRedoButtonsProps {
 export default function UndoRedoButtons({ onUndo, onRedo, canUndo, canRedo }: UndoRedoButtonsProps) {
     return (
         <div className="flex items-center gap-0.5">
-            <IconButton label="Undo (Ctrl+Z)" onClick={onUndo} disabled={!canUndo}>
+            <IconButton label="Undo (Cmd/Ctrl+Z)" onClick={onUndo} disabled={!canUndo}>
                 <Undo2 size={18} />
             </IconButton>
-            <IconButton label="Redo (Ctrl+Shift+Z)" onClick={onRedo} disabled={!canRedo}>
+            <IconButton label="Redo (Cmd/Ctrl+Shift+Z)" onClick={onRedo} disabled={!canRedo}>
                 <Redo2 size={18} />
             </IconButton>
         </div>

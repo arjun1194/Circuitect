@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { STORAGE_KEY, TYPES, ComponentType } from './config/gameConfig';
 import { LEVELS } from './config/levels';
 import { LEVEL_SOLUTIONS } from './config/solutions';
@@ -17,6 +17,7 @@ import { AbstractComponent } from './engine/Physics';
 import { GameLoopController } from './hooks/useGameLoop';
 import { useLevelProgress } from './hooks/useLevelProgress';
 import { ToolMode } from './types';
+import { getUndoRedoShortcutAction } from './utils/keyboardShortcuts';
 
 interface ConfirmState {
   title: string;
@@ -161,6 +162,23 @@ function App() {
   const handleRedo = useCallback(() => {
     gameController?.redo();
   }, [gameController]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const action = getUndoRedoShortcutAction(event);
+      if (!action) return;
+
+      event.preventDefault();
+      if (action === 'undo') {
+        handleUndo();
+      } else {
+        handleRedo();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
 
   const onMountController = useCallback((ctrl: GameLoopController) => {
     setGameController(ctrl);
