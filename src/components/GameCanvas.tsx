@@ -8,11 +8,12 @@ interface GameCanvasProps {
     selectedTool: ComponentType;
     onComponentSelect: (c: AbstractComponent) => void;
     onMountController: (controller: GameLoopController) => void;
+    onHistoryChange?: () => void;
 }
 
-export default function GameCanvas({ toolMode, selectedTool, onComponentSelect, onMountController }: GameCanvasProps) {
+export default function GameCanvas({ toolMode, selectedTool, onComponentSelect, onMountController, onHistoryChange }: GameCanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const controller = useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect);
+    const controller = useGameLoop(canvasRef, toolMode, selectedTool, onComponentSelect, onHistoryChange);
 
     // Pass controller up to parent
     useEffect(() => {
@@ -34,12 +35,22 @@ export default function GameCanvas({ toolMode, selectedTool, onComponentSelect, 
 
             <canvas
                 ref={canvasRef}
-                onMouseDown={controller.handleMouseDown}
-                onMouseMove={controller.handleMouseMove}
-                onMouseUp={controller.handleMouseUp}
-                onMouseLeave={controller.handleMouseUp}
+                onPointerDown={(e) => {
+                    // Capture so drag/up keep firing even if the pointer leaves the canvas (mouse + touch).
+                    try {
+                        e.currentTarget.setPointerCapture?.(e.pointerId);
+                    } catch {
+                        /* setPointerCapture can throw for inactive pointers — safe to ignore */
+                    }
+                    controller.handlePointerDown(e);
+                }}
+                onPointerMove={controller.handlePointerMove}
+                onPointerUp={controller.handlePointerUp}
+                onPointerCancel={controller.handlePointerUp}
                 className="block w-full h-full"
                 style={{ touchAction: 'none' }}
+                aria-label="Circuit canvas"
+                role="img"
             />
             {/* HUD / Overlay items can go here */}
         </div>

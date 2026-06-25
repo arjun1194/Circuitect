@@ -22,10 +22,11 @@ interface GameState {
 }
 
 export interface GameLoopController {
-    handleMouseDown: (e: React.MouseEvent<HTMLCanvasElement>) => void;
-    handleMouseMove: (e: React.MouseEvent<HTMLCanvasElement>) => void;
-    handleMouseUp: (e: React.MouseEvent<HTMLCanvasElement>) => void;
+    handlePointerDown: (e: React.PointerEvent<HTMLCanvasElement>) => void;
+    handlePointerMove: (e: React.PointerEvent<HTMLCanvasElement>) => void;
+    handlePointerUp: (e: React.PointerEvent<HTMLCanvasElement>) => void;
     clear: () => void;
+    resetBoard: () => void;
     getComponents: () => AbstractComponent[];
     getNodes: () => CircuitNode[];
     exportCircuit: () => string;
@@ -42,7 +43,8 @@ export function useGameLoop(
     canvasRef: React.RefObject<HTMLCanvasElement | null>,
     toolMode: string,
     selectedTool: ComponentType,
-    onComponentSelect: (c: AbstractComponent) => void
+    onComponentSelect: (c: AbstractComponent) => void,
+    onHistoryChange?: () => void
 ): GameLoopController {
     // Game State (Refs for mutable game loop state to avoid re-renders)
     const stateRef = useRef<GameState>({
@@ -59,6 +61,19 @@ export function useGameLoop(
 
     // Undo/Redo controller
     const undoRedo = useUndoRedo();
+
+    // Notify React after any history change so undo/redo button state re-renders.
+    const onHistoryChangeRef = useRef(onHistoryChange);
+    useEffect(() => {
+        onHistoryChangeRef.current = onHistoryChange;
+    }, [onHistoryChange]);
+    const notifyHistory = useCallback(() => {
+        onHistoryChangeRef.current?.();
+    }, []);
+    const pushHistory = useCallback(() => {
+        undoRedo.pushState(stateRef.current.nodes, stateRef.current.components);
+        notifyHistory();
+    }, [undoRedo, notifyHistory]);
 
 
 
@@ -124,7 +139,7 @@ export function useGameLoop(
     }, [toolMode]); // Re-bind if necessary
 
     // Input Handling Helpers
-    const getGridPos = (e: React.MouseEvent<HTMLCanvasElement>): { x: number, y: number } => {
+    const getGridPos = (e: React.PointerEvent<HTMLCanvasElement>): { x: number, y: number } => {
         if (!canvasRef.current) return { x: 0, y: 0 };
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
@@ -149,7 +164,7 @@ export function useGameLoop(
     };
 
     // Event Handlers
-    const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
         if (!canvasRef.current) return;
         const state = stateRef.current;
         const pos = getGridPos(e);
@@ -199,7 +214,7 @@ export function useGameLoop(
                 state.components = state.components.filter(c => c !== clickedComp);
                 state.hoverComponent = null;
                 // Save state for undo
-                undoRedo.pushState(state.nodes, state.components);
+                pushHistory();
             } else {
                 // Check for clicked node
                 const clickedNode = state.nodes.find(n => Math.hypot(n.x - mx, n.y - my) < 15);
@@ -218,13 +233,13 @@ export function useGameLoop(
                     state.nodes = state.nodes.filter(n => n !== clickedNode);
                     state.hoverNode = null;
                     // Save state for undo
-                    undoRedo.pushState(state.nodes, state.components);
+                    pushHistory();
                 }
             }
         }
-    }, [toolMode, onComponentSelect, selectedTool, undoRedo]);
+    }, [toolMode, onComponentSelect, pushHistory]);
 
-    const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const handlePointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
         if (!canvasRef.current) return;
         const state = stateRef.current;
         const pos = getGridPos(e);
@@ -244,7 +259,7 @@ export function useGameLoop(
         }) || null;
     }, []);
 
-    const handleMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const handlePointerUp = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
         const state = stateRef.current;
         if (toolMode === 'build' && state.isDragging && state.dragStart) {
             const end = getGridPos(e);
@@ -276,19 +291,33 @@ export function useGameLoop(
                 n2.connections.push(newComp);
 
                 // Save state for undo
-                undoRedo.pushState(state.nodes, state.components);
+                pushHistory();
             }
         }
         state.isDragging = false;
         state.dragStart = null;
-    }, [toolMode, selectedTool]);
+    }, [toolMode, selectedTool, pushHistory]);
 
     // External Controls (Clear, Load Level)
     const clear = useCallback(() => {
+        const state = stateRef.current;
+        // Record the pre-clear board, then an empty board, so a single Undo restores it.
+        if (state.nodes.length > 0 || state.components.length > 0) {
+            undoRedo.pushState(state.nodes, state.components);
+        }
+        state.nodes = [];
+        state.components = [];
+        undoRedo.pushState([], []);
+        notifyHistory();
+    }, [undoRedo, notifyHistory]);
+
+    // Full reset (e.g. on level change) — clears the board AND the undo history.
+    const resetBoard = useCallback(() => {
         stateRef.current.nodes = [];
         stateRef.current.components = [];
         undoRedo.clearHistory();
-    }, [undoRedo]);
+        notifyHistory();
+    }, [undoRedo, notifyHistory]);
 
     // Undo/Redo handlers
     const undo = useCallback((): boolean => {
@@ -296,20 +325,22 @@ export function useGameLoop(
         if (result) {
             stateRef.current.nodes = result.nodes;
             stateRef.current.components = result.components;
+            notifyHistory();
             return true;
         }
         return false;
-    }, [undoRedo]);
+    }, [undoRedo, notifyHistory]);
 
     const redo = useCallback((): boolean => {
         const result = undoRedo.redo();
         if (result) {
             stateRef.current.nodes = result.nodes;
             stateRef.current.components = result.components;
+            notifyHistory();
             return true;
         }
         return false;
-    }, [undoRedo]);
+    }, [undoRedo, notifyHistory]);
 
     const getComponents = () => stateRef.current.components;
     const getNodes = () => stateRef.current.nodes;
@@ -324,18 +355,23 @@ export function useGameLoop(
             const { nodes, components } = circuitFromJson(json);
             stateRef.current.nodes = nodes;
             stateRef.current.components = components;
+            // Imported circuit becomes the new history baseline.
+            undoRedo.clearHistory();
+            undoRedo.pushState(nodes, components);
+            notifyHistory();
             return true;
         } catch (error) {
             console.error('Failed to import circuit:', error);
             return false;
         }
-    }, []);
+    }, [undoRedo, notifyHistory]);
 
     return useMemo(() => ({
-        handleMouseDown,
-        handleMouseMove,
-        handleMouseUp,
+        handlePointerDown,
+        handlePointerMove,
+        handlePointerUp,
         clear,
+        resetBoard,
         getComponents,
         getNodes,
         exportCircuit,
@@ -344,5 +380,5 @@ export function useGameLoop(
         redo,
         canUndo: undoRedo.canUndo,
         canRedo: undoRedo.canRedo
-    }), [handleMouseDown, handleMouseMove, handleMouseUp, clear, exportCircuit, importCircuit, undo, redo, undoRedo]);
+    }), [handlePointerDown, handlePointerMove, handlePointerUp, clear, resetBoard, exportCircuit, importCircuit, undo, redo, undoRedo]);
 }

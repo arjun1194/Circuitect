@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useReducer } from 'react';
+import { X } from 'lucide-react';
 import { AbstractComponent } from '../../../engine/Physics';
 import { TYPES } from '../../../config/gameConfig';
-import { X } from 'lucide-react';
+import { COMPONENT_METADATA } from '../../../config/ComponentMetadata';
+import { Button, IconButton } from '../primitives';
 
 import BatteryEditor from './BatteryEditor';
 import ResistorEditor from './ResistorEditor';
@@ -14,68 +16,71 @@ interface PropertyEditorProps {
     onClose: () => void;
 }
 
+const EDITABLE = new Set<string>([TYPES.BATTERY, TYPES.RESISTOR, TYPES.CAPACITOR, TYPES.LED, TYPES.CHIP]);
+
 export default function PropertyEditor({ component, onClose }: PropertyEditorProps) {
-    const [, forceUpdate] = useState({});
+    const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
     if (!component) return null;
 
-    const handleChange = (field: string, value: any) => {
-        (component as any)[field] = value;
-        forceUpdate({});
+    const meta = COMPONENT_METADATA[component.type];
+    const comp = component as unknown as Record<string, unknown>;
+
+    const handleChange = (field: string, value: string | number) => {
+        comp[field] = value;
+        forceUpdate();
     };
 
     return (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#24283b] p-6 rounded-lg border border-[#7aa2f7] shadow-xl z-50 w-80">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-white font-bold text-lg">Edit Component</h3>
-                <button onClick={onClose} className="text-[#565f89] hover:text-white">
-                    <X size={20} />
-                </button>
+        <div
+            role="dialog"
+            aria-label={`Edit ${meta?.name ?? 'component'}`}
+            className="absolute bottom-3 right-3 top-3 z-30 flex w-80 max-w-[calc(100vw-1.5rem)] flex-col rounded-2xl border border-border bg-surface shadow-2xl"
+        >
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                <div className="flex items-center gap-2">
+                    <span className="h-4 w-4 shrink-0 rounded" style={{ background: meta?.color }} aria-hidden="true" />
+                    <h3 className="text-sm font-medium text-text">{meta?.name ?? 'Component'}</h3>
+                </div>
+                <IconButton label="Close editor" size="sm" onClick={onClose}>
+                    <X size={16} />
+                </IconButton>
             </div>
 
-            {component.type === TYPES.BATTERY && (
-                <BatteryEditor
-                    voltage={(component as any).voltage || 0}
-                    onChange={handleChange}
-                />
-            )}
+            <div className="cx-scroll flex-1 overflow-y-auto px-4 py-4">
+                {component.type === TYPES.BATTERY && (
+                    <BatteryEditor voltage={Number(comp.voltage) || 0} onChange={handleChange} />
+                )}
+                {component.type === TYPES.RESISTOR && (
+                    <ResistorEditor resistance={Number(comp.resistance) || 0} onChange={handleChange} />
+                )}
+                {component.type === TYPES.CAPACITOR && (
+                    <CapacitorEditor capacitance={Number(comp.capacitance) || 0} onChange={handleChange} />
+                )}
+                {component.type === TYPES.LED && (
+                    <LEDEditor
+                        ledColor={(comp.ledColor as string) || 'red'}
+                        maxVoltage={Number(comp.maxVoltage) || 3}
+                        burnt={Boolean(comp.burnt)}
+                        onChange={handleChange}
+                    />
+                )}
+                {component.type === TYPES.CHIP && (
+                    <LogicChipEditor logic={(comp.logic as string) || 'AND'} onChange={handleChange} />
+                )}
 
-            {component.type === TYPES.RESISTOR && (
-                <ResistorEditor
-                    resistance={(component as any).resistance || 0}
-                    onChange={handleChange}
-                />
-            )}
+                {!EDITABLE.has(component.type) && (
+                    <p className="text-sm leading-relaxed text-muted">
+                        This component has no editable properties.
+                    </p>
+                )}
+            </div>
 
-            {component.type === TYPES.CAPACITOR && (
-                <CapacitorEditor
-                    capacitance={(component as any).capacitance || 0}
-                    onChange={handleChange}
-                />
-            )}
-
-            {component.type === TYPES.LED && (
-                <LEDEditor
-                    ledColor={(component as any).ledColor || 'red'}
-                    maxVoltage={(component as any).maxVoltage || 3}
-                    burnt={(component as any).burnt || false}
-                    onChange={handleChange}
-                />
-            )}
-
-            {component.type === TYPES.CHIP && (
-                <LogicChipEditor
-                    logic={(component as any).logic || 'AND'}
-                    onChange={handleChange}
-                />
-            )}
-
-            <button
-                onClick={onClose}
-                className="w-full mt-6 bg-[#9ece6a] text-[#1a1c23] font-bold py-2 rounded hover:opacity-90"
-            >
-                Done
-            </button>
+            <div className="border-t border-border px-4 py-3">
+                <Button variant="primary" className="w-full" onClick={onClose}>
+                    Done
+                </Button>
+            </div>
         </div>
     );
 }

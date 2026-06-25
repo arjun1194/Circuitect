@@ -11,12 +11,20 @@ import ValidationModal from './components/UI/ValidationModal';
 import LevelHUD from './components/UI/LevelHUD';
 import HintsPanel from './components/UI/HintsPanel';
 import DebugPanel from './components/UI/DebugPanel';
-import { Drawer } from './components/UI/primitives';
+import { Drawer, Modal, Button, useToast } from './components/UI/primitives';
 
 import { AbstractComponent } from './engine/Physics';
 import { GameLoopController } from './hooks/useGameLoop';
 import { useLevelProgress } from './hooks/useLevelProgress';
 import { ToolMode } from './types';
+
+interface ConfirmState {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  danger?: boolean;
+  onConfirm: () => void;
+}
 
 function App() {
   // Persistent State
@@ -40,31 +48,39 @@ function App() {
   const [validationResult, setValidationResult] = useState<{ success: boolean; message: string } | null>(null);
   const [showDebug, setShowDebug] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [, forceUpdate] = useState(0); // Used to re-render when undo/redo state changes
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+  const [, bumpHistory] = useState(0); // Re-render when undo/redo availability changes
 
   const currentLevel = LEVELS[levelIndex];
+  const { notify } = useToast();
 
   useLevelProgress(levelIndex);
 
+  const requestConfirm = useCallback((opts: ConfirmState) => setConfirmState(opts), []);
+  const onHistoryChange = useCallback(() => bumpHistory((n) => n + 1), []);
+
   // Handlers
   const handleResetProgress = () => {
-    if (confirm('Reset all progress? You will start from Level 1.')) {
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch {
-        /* ignore */
-      }
-      setLevelIndex(0);
-      window.location.reload();
-    }
+    requestConfirm({
+      title: 'Reset progress?',
+      message: 'This clears your saved progress and starts again from Level 1.',
+      confirmLabel: 'Reset',
+      danger: true,
+      onConfirm: () => {
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+        } catch {
+          /* ignore */
+        }
+        setLevelIndex(0);
+        window.location.reload();
+      },
+    });
   };
 
   const handleTestCircuit = () => {
     if (!gameController) return;
-
-    const components = gameController.getComponents();
-    const success = currentLevel.check(components);
-
+    const success = currentLevel.check(gameController.getComponents());
     setValidationResult(
       success
         ? { success: true, message: 'Great job! The circuit meets all requirements.' }
@@ -79,10 +95,11 @@ function App() {
     setValidationResult(null);
     if (levelIndex < LEVELS.length - 1) {
       setLevelIndex((prev) => prev + 1);
-      handleClearBoard();
+      gameController?.resetBoard();
+      setEditingComponent(null);
       setHintsShown(0);
     } else {
-      alert("Configuration complete! You've beaten the game.");
+      notify("You've completed every level. Nice work!", 'success');
     }
   };
 
@@ -109,40 +126,40 @@ function App() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [gameController]);
+    notify('Circuit exported.', 'success');
+  }, [gameController, notify]);
 
   const handleImport = useCallback(
     (json: string) => {
       if (!gameController) return;
       const success = gameController.importCircuit(json);
-      if (!success) {
-        alert('Failed to import circuit. The file may be corrupted or invalid.');
-      }
+      notify(
+        success ? 'Circuit imported.' : 'Failed to import circuit — the file may be corrupted or invalid.',
+        success ? 'success' : 'error'
+      );
     },
-    [gameController]
+    [gameController, notify]
   );
 
   const handleShowSolution = useCallback(() => {
     if (!gameController) return;
-    if (!confirm('This will clear your current circuit and load the solution. Continue?')) {
-      return;
-    }
-    const solution = LEVEL_SOLUTIONS[levelIndex];
-    if (solution) {
-      gameController.importCircuit(JSON.stringify(solution));
-    }
-  }, [gameController, levelIndex]);
+    requestConfirm({
+      title: 'Load solution?',
+      message: 'This clears your current circuit and loads the correct solution for this level.',
+      confirmLabel: 'Load solution',
+      onConfirm: () => {
+        const solution = LEVEL_SOLUTIONS[levelIndex];
+        if (solution) gameController.importCircuit(JSON.stringify(solution));
+      },
+    });
+  }, [gameController, levelIndex, requestConfirm]);
 
   const handleUndo = useCallback(() => {
-    if (!gameController) return;
-    gameController.undo();
-    forceUpdate((n) => n + 1);
+    gameController?.undo();
   }, [gameController]);
 
   const handleRedo = useCallback(() => {
-    if (!gameController) return;
-    gameController.redo();
-    forceUpdate((n) => n + 1);
+    gameController?.redo();
   }, [gameController]);
 
   const onMountController = useCallback((ctrl: GameLoopController) => {
@@ -195,6 +212,7 @@ function App() {
             selectedTool={selectedTool}
             onComponentSelect={setEditingComponent}
             onMountController={onMountController}
+            onHistoryChange={onHistoryChange}
           />
 
           <FloatingControls
@@ -232,6 +250,34 @@ function App() {
           onPick={() => setPaletteOpen(false)}
         />
       </Drawer>
+
+      {/* In-app confirmation dialog (replaces native confirm) */}
+      {confirmState && (
+        <Modal
+          open
+          onClose={() => setConfirmState(null)}
+          title={confirmState.title}
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setConfirmState(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant={confirmState.danger ? 'danger' : 'primary'}
+                onClick={() => {
+                  const run = confirmState.onConfirm;
+                  setConfirmState(null);
+                  run();
+                }}
+              >
+                {confirmState.confirmLabel}
+              </Button>
+            </>
+          }
+        >
+          {confirmState.message}
+        </Modal>
+      )}
     </div>
   );
 }

@@ -1,10 +1,11 @@
+import { AlertTriangle } from 'lucide-react';
 import { EditorSelect, EditorSlider } from './EditorComponents';
 
 interface LEDEditorProps {
     ledColor: string;
     maxVoltage: number;
     burnt: boolean;
-    onChange: (field: string, value: any) => void;
+    onChange: (field: string, value: string | number) => void;
 }
 
 const LED_COLORS = [
@@ -12,12 +13,12 @@ const LED_COLORS = [
     { value: 'green', label: 'Green' },
     { value: 'blue', label: 'Blue' },
     { value: 'yellow', label: 'Yellow' },
-    { value: 'white', label: 'White' }
+    { value: 'white', label: 'White' },
 ];
 
 export default function LEDEditor({ ledColor, maxVoltage, burnt, onChange }: LEDEditorProps) {
     return (
-        <div className="space-y-4">
+        <div>
             <EditorSelect
                 label="Color"
                 value={ledColor}
@@ -25,19 +26,17 @@ export default function LEDEditor({ ledColor, maxVoltage, burnt, onChange }: LED
                 onChange={(v) => onChange('ledColor', v)}
             />
             <EditorSlider
-                label="Max Voltage (V)"
+                label="Max voltage (V)"
                 value={maxVoltage}
                 min={1}
                 max={12}
                 step={0.5}
                 onChange={(v) => onChange('maxVoltage', v)}
             />
-            <div className="text-sm text-[#9aa5ce]">
-                Rating: <span className="text-[#7aa2f7] font-bold">{maxVoltage}V</span>
-            </div>
             {burnt && (
-                <div className="bg-[#f7768e]/20 border border-[#f7768e] rounded px-3 py-2 text-sm text-[#f7768e] font-bold">
-                    ⚠️ LED is burnt! Replace to fix.
+                <div className="flex items-center gap-2 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm font-medium text-danger">
+                    <AlertTriangle size={16} className="shrink-0" />
+                    LED is burnt — replace it to fix.
                 </div>
             )}
         </div>

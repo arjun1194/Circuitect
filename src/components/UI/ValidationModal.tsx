@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
+import { Button } from './primitives';
 
 interface ValidationModalProps {
     success: boolean;
@@ -9,38 +11,55 @@ interface ValidationModalProps {
 }
 
 export default function ValidationModal({ success, message, onNext, onRetry, isLastLevel }: ValidationModalProps) {
+    const actionRef = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        actionRef.current?.focus();
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onRetry();
+        };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [onRetry]);
+
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
-            <div className="bg-[#24283b] w-96 rounded-xl shadow-2xl border border-[#414868] p-6 transform scale-100 transition-all">
+        <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+            onMouseDown={(e) => {
+                if (e.target === e.currentTarget) onRetry();
+            }}
+            role="presentation"
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-label={success ? 'Circuit functional' : 'Test failed'}
+                className="w-full max-w-sm rounded-2xl border border-border bg-surface p-6 shadow-2xl"
+            >
                 <div className="flex flex-col items-center text-center">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${success ? 'bg-[#9ece6a]/20 text-[#9ece6a]' : 'bg-[#f7768e]/20 text-[#f7768e]'
-                        }`}>
-                        {success ? <CheckCircle size={40} /> : <AlertTriangle size={40} />}
+                    <div
+                        className={`mb-4 flex h-16 w-16 items-center justify-center rounded-full ${
+                            success ? 'bg-success/15 text-success' : 'bg-danger/15 text-danger'
+                        }`}
+                    >
+                        {success ? <CheckCircle size={36} /> : <AlertTriangle size={36} />}
                     </div>
 
-                    <h2 className="text-xl font-bold text-white mb-2">
-                        {success ? 'Circuit Functional!' : 'Test Failed'}
+                    <h2 className="mb-2 text-xl font-medium text-text">
+                        {success ? 'Circuit functional!' : 'Test failed'}
                     </h2>
 
-                    <p className="text-[#9aa5ce] mb-6 leading-relaxed">
-                        {message}
-                    </p>
+                    <p className="mb-6 leading-relaxed text-muted">{message}</p>
 
-                    <div className="flex gap-3 w-full">
+                    <div className="flex w-full gap-3">
                         {success ? (
-                            <button
-                                onClick={onNext}
-                                className="flex-1 bg-[#9ece6a] text-[#1a1c23] font-bold py-3 rounded-lg hover:opacity-90 transition-transform active:scale-95"
-                            >
-                                {isLastLevel ? 'Finish Game' : 'Next Level →'}
-                            </button>
+                            <Button ref={actionRef} variant="primary" className="flex-1 py-3" onClick={onNext}>
+                                {isLastLevel ? 'Finish game' : 'Next level'}
+                            </Button>
                         ) : (
-                            <button
-                                onClick={onRetry}
-                                className="flex-1 bg-[#2f3549] text-white font-bold py-3 rounded-lg hover:bg-[#414868] transition-colors"
-                            >
-                                Try Again
-                            </button>
+                            <Button ref={actionRef} variant="secondary" className="flex-1 py-3" onClick={onRetry}>
+                                Try again
+                            </Button>
                         )}
                     </div>
                 </div>
