@@ -16,7 +16,7 @@ export const level1Solution: SerializedCircuit = {
     ],
     components: [
         { type: 'BATTERY', n1Id: 0, n2Id: 1, properties: { voltage: 9 } },
-        { type: 'LED', n1Id: 1, n2Id: 2, properties: { ledColor: 'red' } },
+        { type: 'LED', n1Id: 2, n2Id: 1, properties: { ledColor: 'red' } },
         { type: 'WIRE', n1Id: 2, n2Id: 3 },
         { type: 'WIRE', n1Id: 3, n2Id: 0 }
     ]
@@ -35,7 +35,7 @@ export const level2Solution: SerializedCircuit = {
     components: [
         { type: 'BATTERY', n1Id: 0, n2Id: 1, properties: { voltage: 9 } },
         { type: 'SWITCH', n1Id: 1, n2Id: 2, properties: { param: 1 } },
-        { type: 'LED', n1Id: 2, n2Id: 3, properties: { ledColor: 'red' } },
+        { type: 'LED', n1Id: 3, n2Id: 2, properties: { ledColor: 'red' } },
         { type: 'WIRE', n1Id: 3, n2Id: 4 },
         { type: 'WIRE', n1Id: 4, n2Id: 0 }
     ]
@@ -54,7 +54,7 @@ export const level3Solution: SerializedCircuit = {
     components: [
         { type: 'BATTERY', n1Id: 0, n2Id: 1, properties: { voltage: 9 } },
         { type: 'RESISTOR', n1Id: 1, n2Id: 2, properties: { resistance: 330 } },
-        { type: 'LED', n1Id: 2, n2Id: 3, properties: { ledColor: 'red' } },
+        { type: 'LED', n1Id: 3, n2Id: 2, properties: { ledColor: 'red' } },
         { type: 'WIRE', n1Id: 3, n2Id: 4 },
         { type: 'WIRE', n1Id: 4, n2Id: 0 }
     ]
@@ -71,8 +71,8 @@ export const level4Solution: SerializedCircuit = {
     ],
     components: [
         { type: 'BATTERY', n1Id: 0, n2Id: 1, properties: { voltage: 9 } },
-        { type: 'LED', n1Id: 1, n2Id: 2, properties: { ledColor: 'red' } },
-        { type: 'LED', n1Id: 1, n2Id: 2, properties: { ledColor: 'green' } },
+        { type: 'LED', n1Id: 2, n2Id: 1, properties: { ledColor: 'red' } },
+        { type: 'LED', n1Id: 2, n2Id: 1, properties: { ledColor: 'green' } },
         { type: 'WIRE', n1Id: 2, n2Id: 3 },
         { type: 'WIRE', n1Id: 3, n2Id: 0 }
     ]
@@ -109,8 +109,8 @@ export const level6Solution: SerializedCircuit = {
     components: [
         { type: 'BATTERY', n1Id: 0, n2Id: 1, properties: { voltage: 9 } },
         { type: 'TRANSISTOR', n1Id: 1, n2Id: 3, n3Id: 2 },
-        { type: 'WIRE', n1Id: 0, n2Id: 2 },  // Base voltage from battery
-        { type: 'LED', n1Id: 3, n2Id: 4, properties: { ledColor: 'red' } },
+        { type: 'RESISTOR', n1Id: 0, n2Id: 2, properties: { resistance: 1000 } },  // Base current limiting
+        { type: 'LED', n1Id: 4, n2Id: 3, properties: { ledColor: 'red' } },
         { type: 'WIRE', n1Id: 4, n2Id: 5 },
         { type: 'WIRE', n1Id: 5, n2Id: 0 }
     ]

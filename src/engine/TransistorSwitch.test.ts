@@ -1,147 +1,53 @@
 import { describe, it, expect } from 'vitest';
 import { CircuitNode, physicsStep, AbstractComponent } from './Physics';
-import { Battery, Switch, Resistor, Transistor, Wire } from './components';
+import { Battery, Switch, Resistor, Transistor } from './components';
 
 /**
- * Tests for transistor switching behavior
- * 
- * Simple circuit: Battery → Switch → Resistor → Transistor Base
- *                 Emitter grounded, Collector has load
+ * NPN transistor as a switch, in a proper common-emitter configuration:
+ *   Vcc → Rc → collector;  emitter = ground;  base biased from Vcc via a switch.
+ * With the MNA + Ebers–Moll engine the transistor conducts when the base is
+ * driven (collector pulled low) and is off when the base is floating
+ * (collector pulled up to Vcc).
  */
-describe('Transistor Switch Circuit Tests', () => {
+describe('Transistor switch (common-emitter)', () => {
+    const build = (switchClosed: boolean) => {
+        const nVcc = new CircuitNode(0, 0);
+        const nGnd = new CircuitNode(0, 100);
+        const nSw = new CircuitNode(50, 0);
+        const nBase = new CircuitNode(100, 0);
+        const nCol = new CircuitNode(100, -50);
 
-    // Helper to setup connections
-    const connect = (comp: AbstractComponent) => {
-        comp.n1.connections.push(comp);
-        comp.n2.connections.push(comp);
-        if (comp.n3) comp.n3.connections.push(comp);
+        const battery = new Battery(nVcc, nGnd);
+        battery.voltage = 5;
+        const rc = new Resistor(nVcc, nCol);
+        rc.resistance = 1000;
+        const sw = new Switch(nVcc, nSw);
+        sw.param = switchClosed ? 1 : 0;
+        const rb = new Resistor(nSw, nBase);
+        rb.resistance = 4700;
+        const transistor = new Transistor(nGnd, nCol); // n1 = emitter (gnd), n2 = collector
+        transistor.n3 = nBase;
+
+        const nodes = [nVcc, nGnd, nSw, nBase, nCol];
+        const components: AbstractComponent[] = [battery, rc, sw, rb, transistor];
+        for (let i = 0; i < 5; i++) physicsStep(nodes, components);
+        return { nBase, nGnd, nCol, transistor };
     };
 
-    // Run physics for convergence
-    const runSimulation = (nodes: CircuitNode[], components: AbstractComponent[], iterations = 20) => {
-        for (let i = 0; i < iterations; i++) {
-            physicsStep(nodes, components);
-        }
-    };
-
-    it('should turn transistor ON when base switch is CLOSED', () => {
-        // Simple circuit: Battery(5V) → Switch(closed) → Resistor(1k) → Base
-        //                 Emitter grounded, Collector connected to power via resistor
-
-        const nPower = new CircuitNode(0, 0);        // 5V positive
-        const nGround = new CircuitNode(0, 100);     // Ground (0V)
-        const nAfterSwitch = new CircuitNode(50, 0); // After switch
-        const nBase = new CircuitNode(100, 0);       // Transistor base
-        const nEmitter = new CircuitNode(100, 100);  // Transistor emitter (grounded)
-        const nCollector = new CircuitNode(100, -50);// Transistor collector
-
-        // Components
-        const battery = new Battery(nPower, nGround);
-        (battery as any).voltage = 5;
-
-        const sw = new Switch(nPower, nAfterSwitch);
-        sw.param = 1; // CLOSED
-
-        const baseResistor = new Resistor(nAfterSwitch, nBase);
-        (baseResistor as any).resistance = 1000;
-
-        const transistor = new Transistor(nEmitter, nCollector);
-        transistor.n3 = nBase;
-        nBase.connections.push(transistor);
-
-        // Ground connection for emitter
-        const groundWire = new Wire(nEmitter, nGround);
-
-        const components = [battery, sw, baseResistor, transistor, groundWire];
-        const nodes = [nPower, nGround, nAfterSwitch, nBase, nEmitter, nCollector];
-
-        components.forEach(connect);
-        runSimulation(nodes, components);
-
-        // Check V_BE
-        const vBE = nBase.voltage - nEmitter.voltage;
-
-        // With switch closed, V_BE should be significant (above threshold)
-        // Base should get ~5V through 1k resistor, emitter ~0V
-        expect(vBE).toBeGreaterThan(0.5);
+    it('turns ON when the base switch is CLOSED (collector pulled low)', () => {
+        const { nBase, nGnd, nCol } = build(true);
+        expect(nBase.voltage - nGnd.voltage).toBeGreaterThan(0.5); // V_BE clamps ~0.7
+        expect(nCol.voltage).toBeLessThan(2); // conducting / saturated
     });
 
-    it('should turn transistor OFF when base switch is OPEN', () => {
-        const nPower = new CircuitNode(0, 0);
-        const nGround = new CircuitNode(0, 100);
-        const nAfterSwitch = new CircuitNode(50, 0);
-        const nBase = new CircuitNode(100, 0);
-        const nEmitter = new CircuitNode(100, 100);
-        const nCollector = new CircuitNode(100, -50);
-
-        const battery = new Battery(nPower, nGround);
-        (battery as any).voltage = 5;
-
-        const sw = new Switch(nPower, nAfterSwitch);
-        sw.param = 0; // OPEN
-
-        const baseResistor = new Resistor(nAfterSwitch, nBase);
-        (baseResistor as any).resistance = 1000;
-
-        const transistor = new Transistor(nEmitter, nCollector);
-        transistor.n3 = nBase;
-        nBase.connections.push(transistor);
-
-        const groundWire = new Wire(nEmitter, nGround);
-
-        const components = [battery, sw, baseResistor, transistor, groundWire];
-        const nodes = [nPower, nGround, nAfterSwitch, nBase, nEmitter, nCollector];
-
-        components.forEach(connect);
-        runSimulation(nodes, components);
-
-        const vBE = nBase.voltage - nEmitter.voltage;
-
-        // With switch open, base is floating → V_BE should be near 0
-        expect(vBE).toBeLessThan(0.6);
+    it('stays OFF when the base switch is OPEN (collector near Vcc)', () => {
+        const { nBase, nGnd, nCol } = build(false);
+        expect(nBase.voltage - nGnd.voltage).toBeLessThan(0.5);
+        expect(nCol.voltage).toBeGreaterThan(4);
     });
 
-    it('should toggle transistor state when switch changes', () => {
-        const nPower = new CircuitNode(0, 0);
-        const nGround = new CircuitNode(0, 100);
-        const nAfterSwitch = new CircuitNode(50, 0);
-        const nBase = new CircuitNode(100, 0);
-        const nEmitter = new CircuitNode(100, 100);
-        const nCollector = new CircuitNode(100, -50);
-
-        const battery = new Battery(nPower, nGround);
-        (battery as any).voltage = 5;
-
-        const sw = new Switch(nPower, nAfterSwitch);
-        sw.param = 0; // Start OPEN
-
-        const baseResistor = new Resistor(nAfterSwitch, nBase);
-        (baseResistor as any).resistance = 1000;
-
-        const transistor = new Transistor(nEmitter, nCollector);
-        transistor.n3 = nBase;
-        nBase.connections.push(transistor);
-
-        const groundWire = new Wire(nEmitter, nGround);
-
-        const components = [battery, sw, baseResistor, transistor, groundWire];
-        const nodes = [nPower, nGround, nAfterSwitch, nBase, nEmitter, nCollector];
-
-        components.forEach(connect);
-
-        // Initially OPEN
-        runSimulation(nodes, components);
-        expect(nBase.voltage - nEmitter.voltage).toBeLessThan(0.6);
-
-        // Close switch
-        sw.param = 1;
-        runSimulation(nodes, components);
-        expect(nBase.voltage - nEmitter.voltage).toBeGreaterThan(0.5);
-
-        // Open switch again
-        sw.param = 0;
-        runSimulation(nodes, components);
-        expect(nBase.voltage - nEmitter.voltage).toBeLessThan(0.6);
+    it('toggles collector state as the switch changes', () => {
+        expect(build(true).nCol.voltage).toBeLessThan(2);
+        expect(build(false).nCol.voltage).toBeGreaterThan(4);
     });
 });
-
